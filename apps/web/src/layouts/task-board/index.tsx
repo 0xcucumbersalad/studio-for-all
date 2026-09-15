@@ -166,7 +166,7 @@ import type { TiptapDoc } from "@/components/chat/types";
 import { toast } from "sonner";
 
 // Warm the chat chunk so opening a task's activity doesn't cold-load it (flash).
-void import("../agent-shell-layout/index.tsx").catch(() => {});
+void import("../../routes/thread-session/route.tsx").catch(() => {});
 
 const DATE_FMT = new Intl.DateTimeFormat(undefined, {
   month: "short",
@@ -2118,7 +2118,7 @@ function Lanes({
         </div>
       </div>
       {/* Portal to body so the overlay's `position: fixed` resolves against the
-          viewport rather than the workspace PanelCard's transformed containing
+          viewport rather than the workspace Panel's transformed containing
           block (which would offset the card from the cursor). */}
       {createPortal(
         // No drop animation: because the lane opens a live gap under the

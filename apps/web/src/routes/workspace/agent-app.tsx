@@ -1,3 +1,4 @@
+import { ChatLayout } from "@/components/chat-layout";
 import { getRouteApi } from "@tanstack/react-router";
 import { useRouteThreadId } from "@/layouts/thread-route";
 import { useTaskMetadata } from "@/layouts/main-panel-tabs/use-task-metadata";
@@ -7,7 +8,7 @@ const route = getRouteApi(
   "/shell/$org/org-shell/agent-shell/projects/$agentId/apps/$connectionId/$toolName",
 );
 
-export default function AppRoute() {
+function AgentAppContent() {
   const { connectionId, toolName } = route.useParams();
   const threadId = useRouteThreadId();
   const metadata = useTaskMetadata(threadId);
@@ -21,5 +22,13 @@ export default function AppRoute() {
       toolName={toolName}
       args={expandedTool?.args}
     />
+  );
+}
+
+export default function AgentAppRoute() {
+  return (
+    <ChatLayout.Content>
+      <AgentAppContent />
+    </ChatLayout.Content>
   );
 }

@@ -1,3 +1,4 @@
+import { ChatLayout } from "@/components/chat-layout";
 import { getRouteApi } from "@tanstack/react-router";
 import { AppViewContent } from "@/routes/project-app-view";
 import { SettingsTab } from "@/layouts/main-panel-tabs/settings-tab";
@@ -7,7 +8,7 @@ const route = getRouteApi(
   "/shell/$org/org-shell/agent-shell/projects/$agentId/views/$viewId",
 );
 
-export default function AgentViewRoute() {
+function AgentViewContent() {
   const { agentId, viewId } = route.useParams();
   const agent = useVirtualMCP(agentId);
   const tab = agent?.metadata?.ui?.layout?.tabs?.find(
@@ -22,5 +23,13 @@ export default function AgentViewRoute() {
     />
   ) : (
     <SettingsTab virtualMcpId={agentId} />
+  );
+}
+
+export default function AgentViewRoute() {
+  return (
+    <ChatLayout.Content>
+      <AgentViewContent />
+    </ChatLayout.Content>
   );
 }
