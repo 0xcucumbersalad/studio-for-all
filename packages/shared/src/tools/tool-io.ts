@@ -7604,6 +7604,7 @@ export interface StudioToolIO {
     output: {
       github: {
         configured: boolean;
+        cliConnectPath: string | null;
         connectPath: string | null;
         installPath: string | null;
       };
@@ -7619,7 +7620,7 @@ export interface StudioToolIO {
         organizationId: string;
         type: "github" | "gitlab" | "bitbucket";
         host: string;
-        authKind: "token" | "oauth" | "github_app";
+        authKind: "token" | "oauth" | "github_app" | "github_cli";
         externalAccountId: string;
         login: string;
         avatarUrl: string | null;
@@ -7645,7 +7646,7 @@ export interface StudioToolIO {
         organizationId: string;
         type: "github" | "gitlab" | "bitbucket";
         host: string;
-        authKind: "token" | "oauth" | "github_app";
+        authKind: "token" | "oauth" | "github_app" | "github_cli";
         externalAccountId: string;
         login: string;
         avatarUrl: string | null;

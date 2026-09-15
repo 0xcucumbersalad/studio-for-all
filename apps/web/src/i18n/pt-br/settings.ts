@@ -132,6 +132,10 @@ export const settings = {
     "Entrar com GitHub, GitLab ou Bitbucket depende de credenciais do provedor que um administrador configura nesta instalação. Você ainda pode conectar uma conta do GitLab ou do Bitbucket com um token de acesso.",
   "settings.repositories.githubUnavailable":
     "Peça a um administrador para habilitar o GitHub.",
+  "settings.repositories.connectGithubCli": "Conectar com GitHub CLI",
+  "settings.repositories.githubCliHint":
+    "Use seu login local do gh para buscar e importar repositórios.",
+  "settings.repositories.authKindGithubCli": "GitHub CLI",
   "settings.repositories.addGithubAccount":
     "Adicionar conta ou organização do GitHub",
   "settings.repositories.githubSelectTitle": "Selecionar repositórios",

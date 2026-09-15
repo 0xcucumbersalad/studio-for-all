@@ -41,6 +41,7 @@ import {
   type GitProviderCapabilities,
   useGitProviderCapabilities,
   useConnectGitAccountToken,
+  useConnectGithubCli,
 } from "@/hooks/use-git-providers";
 import { useProjectContext } from "@/sdk";
 import { useT } from "@/i18n/use-t.ts";
@@ -57,7 +58,7 @@ type Stage =
 
 /** How one provider can be connected on this deployment. `href` navigates; a token opens the form. */
 interface ConnectMethod {
-  kind: "app" | "oauth" | "token";
+  kind: "app" | "oauth" | "token" | "cli";
   href?: string;
 }
 
@@ -76,7 +77,11 @@ function providerHint(
   methods: ConnectMethod[],
 ): Key {
   if (methods.length === 0) return "settings.repositories.githubUnavailable";
-  if (provider === "github") return "settings.repositories.providerGithubHint";
+  if (provider === "github") {
+    return methods.some((method) => method.kind === "cli")
+      ? "settings.repositories.githubCliHint"
+      : "settings.repositories.providerGithubHint";
+  }
   return methods.length > 1
     ? "settings.repositories.providerTokenOrOauthHint"
     : "settings.repositories.providerTokenOnlyHint";
@@ -129,7 +134,7 @@ const PROVIDER_ORDER: GitProviderKind[] = ["github", "gitlab", "bitbucket"];
 
 /**
  * The ways `provider` can be connected here, token first. Empty for GitHub
- * with no App: it is the one provider with no token fallback.
+ * with neither local CLI access nor an App configured.
  */
 function methodsFor(
   provider: GitProviderKind,
@@ -138,6 +143,7 @@ function methodsFor(
 ): ConnectMethod[] {
   if (provider === "github") {
     const github = capabilities?.github;
+    if (github?.cliConnectPath) return [{ kind: "cli" }];
     return github?.configured && github.connectPath
       ? [{ kind: "app", href: connectUrl(github.connectPath) }]
       : [];
@@ -244,6 +250,7 @@ function AddAccountDialog({
 }) {
   const t = useT();
   const capabilities = useGitProviderCapabilities();
+  const cliConnect = useConnectGithubCli();
   const { org } = useProjectContext();
   const returnTo = `/${org.slug}/settings/repositories`;
   const connectUrl = (path: string) =>
@@ -252,6 +259,19 @@ function AddAccountDialog({
   function choose(provider: GitProviderKind) {
     const methods = methodsFor(provider, capabilities.data, connectUrl);
     const only = methods.length === 1 ? methods[0] : undefined;
+    if (only?.kind === "cli") {
+      cliConnect.mutate(undefined, {
+        onSuccess: (account) => {
+          toast.success(
+            t("settings.repositories.connected", { login: account.login }),
+          );
+          onClose();
+        },
+        onError: (error) =>
+          toast.error(errorMessage(error, t("settings.repositories.failed"))),
+      });
+      return;
+    }
     if (only?.href) {
       globalThis.location.href = only.href;
       return;
@@ -319,9 +339,13 @@ function AddAccountDialog({
                 <OptionRow
                   key={provider}
                   icon={<GitProviderIcon provider={provider} size={16} />}
-                  label={t(PROVIDER_COPY[provider].label)}
+                  label={t(
+                    methods[0]?.kind === "cli"
+                      ? "settings.repositories.connectGithubCli"
+                      : PROVIDER_COPY[provider].label,
+                  )}
                   description={t(providerHint(provider, methods))}
-                  disabled={methods.length === 0}
+                  disabled={methods.length === 0 || cliConnect.isPending}
                   onClick={() => choose(provider)}
                 />
               );
@@ -335,18 +359,22 @@ function AddAccountDialog({
                   key={method.kind}
                   icon={<GitProviderIcon provider={stage.provider} size={16} />}
                   label={t(
-                    method.kind === "token"
-                      ? "settings.repositories.methodToken"
-                      : method.kind === "oauth"
-                        ? "settings.repositories.methodOauth"
-                        : "settings.repositories.methodApp",
+                    method.kind === "cli"
+                      ? "settings.repositories.connectGithubCli"
+                      : method.kind === "token"
+                        ? "settings.repositories.methodToken"
+                        : method.kind === "oauth"
+                          ? "settings.repositories.methodOauth"
+                          : "settings.repositories.methodApp",
                   )}
                   description={t(
-                    method.kind === "token"
-                      ? "settings.repositories.methodTokenHint"
-                      : method.kind === "oauth"
-                        ? "settings.repositories.methodOauthHint"
-                        : "settings.repositories.methodAppHint",
+                    method.kind === "cli"
+                      ? "settings.repositories.githubCliHint"
+                      : method.kind === "token"
+                        ? "settings.repositories.methodTokenHint"
+                        : method.kind === "oauth"
+                          ? "settings.repositories.methodOauthHint"
+                          : "settings.repositories.methodAppHint",
                   )}
                   note={
                     method.kind === "oauth"
@@ -355,13 +383,15 @@ function AddAccountDialog({
                   }
                   href={method.href}
                   onClick={
-                    method.kind === "token"
-                      ? () =>
-                          onStage({
-                            name: "token",
-                            provider: stage.provider as TokenProvider,
-                          })
-                      : undefined
+                    method.kind === "cli"
+                      ? () => choose(stage.provider)
+                      : method.kind === "token"
+                        ? () =>
+                            onStage({
+                              name: "token",
+                              provider: stage.provider as TokenProvider,
+                            })
+                        : undefined
                   }
                 />
               ),
