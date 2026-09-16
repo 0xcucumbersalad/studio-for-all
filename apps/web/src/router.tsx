@@ -788,6 +788,20 @@ const agentAnalyticsRoute = createRoute({
   ),
 });
 
+const agentExperimentsRoute = createRoute({
+  pendingComponent: ChatLayoutPending,
+  errorComponent: ChatLayoutError,
+  getParentRoute: () => agentWorkspaceRoute,
+  path: "/experiments",
+  staticData: {
+    defaultMain: "experiments",
+    mainView: "experiments",
+  },
+  component: lazyRouteComponent(
+    () => import("./routes/workspace/agent-experiments.tsx"),
+  ),
+});
+
 const agentMonitorRoute = createRoute({
   pendingComponent: ChatLayoutPending,
   errorComponent: ChatLayoutError,
@@ -1452,6 +1466,7 @@ const agentWorkspaceWithChildren = agentWorkspaceRoute.addChildren([
   agentHostingRoute,
   agentE2eRoute,
   agentAnalyticsRoute,
+  agentExperimentsRoute,
   agentMonitorRoute,
   agentAppRoute,
   agentViewRoute,

@@ -134,6 +134,7 @@ export interface StudioToolIO {
             hosting_enabled?: boolean | undefined;
             deco_analytics_enabled?: boolean | undefined;
             e2e_enabled?: boolean | undefined;
+            experiments_enabled?: boolean | undefined;
             monitor_enabled?: boolean | undefined;
             delivery_lanes_enabled?: boolean | undefined;
             cms_auto_fresh_branch?: boolean | undefined;
@@ -212,6 +213,7 @@ export interface StudioToolIO {
             hosting_enabled?: boolean | undefined;
             deco_analytics_enabled?: boolean | undefined;
             e2e_enabled?: boolean | undefined;
+            experiments_enabled?: boolean | undefined;
             monitor_enabled?: boolean | undefined;
             delivery_lanes_enabled?: boolean | undefined;
             cms_auto_fresh_branch?: boolean | undefined;
@@ -290,6 +292,7 @@ export interface StudioToolIO {
             hosting_enabled?: boolean | undefined;
             deco_analytics_enabled?: boolean | undefined;
             e2e_enabled?: boolean | undefined;
+            experiments_enabled?: boolean | undefined;
             monitor_enabled?: boolean | undefined;
             delivery_lanes_enabled?: boolean | undefined;
             cms_auto_fresh_branch?: boolean | undefined;
@@ -2120,6 +2123,7 @@ export interface StudioToolIO {
                             | "e2e"
                             | "analytics"
                             | "cdn"
+                            | "experiments"
                           )[]
                         | null
                         | undefined;
@@ -2178,6 +2182,7 @@ export interface StudioToolIO {
                 | "e2e"
                 | "analytics"
                 | "cdn"
+                | "experiments"
               )[]
             | null
             | undefined;
@@ -2389,6 +2394,7 @@ export interface StudioToolIO {
                                 | "e2e"
                                 | "analytics"
                                 | "cdn"
+                                | "experiments"
                               )[]
                             | null
                             | undefined;
@@ -2447,6 +2453,7 @@ export interface StudioToolIO {
                     | "e2e"
                     | "analytics"
                     | "cdn"
+                    | "experiments"
                   )[]
                 | null
                 | undefined;
@@ -2584,6 +2591,7 @@ export interface StudioToolIO {
                             | "e2e"
                             | "analytics"
                             | "cdn"
+                            | "experiments"
                           )[]
                         | null
                         | undefined;
@@ -2642,6 +2650,7 @@ export interface StudioToolIO {
                 | "e2e"
                 | "analytics"
                 | "cdn"
+                | "experiments"
               )[]
             | null
             | undefined;
@@ -2815,6 +2824,7 @@ export interface StudioToolIO {
                             | "e2e"
                             | "analytics"
                             | "cdn"
+                            | "experiments"
                           )[]
                         | null
                         | undefined;
@@ -2873,6 +2883,7 @@ export interface StudioToolIO {
                 | "e2e"
                 | "analytics"
                 | "cdn"
+                | "experiments"
               )[]
             | null
             | undefined;
@@ -3037,6 +3048,7 @@ export interface StudioToolIO {
                             | "e2e"
                             | "analytics"
                             | "cdn"
+                            | "experiments"
                           )[]
                         | null
                         | undefined;
@@ -3095,6 +3107,7 @@ export interface StudioToolIO {
                 | "e2e"
                 | "analytics"
                 | "cdn"
+                | "experiments"
               )[]
             | null
             | undefined;
@@ -3258,6 +3271,7 @@ export interface StudioToolIO {
                                 | "e2e"
                                 | "analytics"
                                 | "cdn"
+                                | "experiments"
                               )[]
                             | null
                             | undefined;
@@ -3316,6 +3330,7 @@ export interface StudioToolIO {
                     | "e2e"
                     | "analytics"
                     | "cdn"
+                    | "experiments"
                   )[]
                 | null
                 | undefined;
@@ -3461,6 +3476,7 @@ export interface StudioToolIO {
                             | "e2e"
                             | "analytics"
                             | "cdn"
+                            | "experiments"
                           )[]
                         | null
                         | undefined;
@@ -3519,6 +3535,7 @@ export interface StudioToolIO {
                 | "e2e"
                 | "analytics"
                 | "cdn"
+                | "experiments"
               )[]
             | null
             | undefined;
@@ -3681,6 +3698,7 @@ export interface StudioToolIO {
                             | "e2e"
                             | "analytics"
                             | "cdn"
+                            | "experiments"
                           )[]
                         | null
                         | undefined;
@@ -3739,6 +3757,7 @@ export interface StudioToolIO {
                 | "e2e"
                 | "analytics"
                 | "cdn"
+                | "experiments"
               )[]
             | null
             | undefined;
@@ -4497,6 +4516,155 @@ export interface StudioToolIO {
       }[];
     };
   };
+  EXPERIMENT_LIST: {
+    input: { site: string };
+    output: {
+      experiments: {
+        id: string;
+        organizationId: string;
+        site: string;
+        key: string;
+        name: string;
+        status: "draft" | "running" | "paused" | "ended";
+        goals: string[];
+        variants: {
+          id: string;
+          weight: number;
+          role?: "control" | "treatment" | null | undefined;
+        }[];
+        startedAt: string | null;
+        endedAt: string | null;
+        createdBy: string;
+        createdAt: string;
+        updatedAt: string;
+      }[];
+    };
+  };
+  EXPERIMENT_GET: {
+    input: { site: string; key: string };
+    output: {
+      experiment: {
+        id: string;
+        organizationId: string;
+        site: string;
+        key: string;
+        name: string;
+        status: "draft" | "running" | "paused" | "ended";
+        goals: string[];
+        variants: {
+          id: string;
+          weight: number;
+          role?: "control" | "treatment" | null | undefined;
+        }[];
+        startedAt: string | null;
+        endedAt: string | null;
+        createdBy: string;
+        createdAt: string;
+        updatedAt: string;
+      } | null;
+    };
+  };
+  EXPERIMENT_CREATE: {
+    input: {
+      site: string;
+      key: string;
+      name: string;
+      goals?: string[] | undefined;
+      variants?:
+        | {
+            id: string;
+            weight: number;
+            role?: "control" | "treatment" | null | undefined;
+          }[]
+        | undefined;
+    };
+    output: {
+      experiment: {
+        id: string;
+        organizationId: string;
+        site: string;
+        key: string;
+        name: string;
+        status: "draft" | "running" | "paused" | "ended";
+        goals: string[];
+        variants: {
+          id: string;
+          weight: number;
+          role?: "control" | "treatment" | null | undefined;
+        }[];
+        startedAt: string | null;
+        endedAt: string | null;
+        createdBy: string;
+        createdAt: string;
+        updatedAt: string;
+      };
+    };
+  };
+  EXPERIMENT_UPDATE: {
+    input: {
+      site: string;
+      key: string;
+      name?: string | undefined;
+      status?: "draft" | "running" | "paused" | "ended" | undefined;
+      goals?: string[] | undefined;
+      variants?:
+        | {
+            id: string;
+            weight: number;
+            role?: "control" | "treatment" | null | undefined;
+          }[]
+        | undefined;
+    };
+    output: {
+      experiment: {
+        id: string;
+        organizationId: string;
+        site: string;
+        key: string;
+        name: string;
+        status: "draft" | "running" | "paused" | "ended";
+        goals: string[];
+        variants: {
+          id: string;
+          weight: number;
+          role?: "control" | "treatment" | null | undefined;
+        }[];
+        startedAt: string | null;
+        endedAt: string | null;
+        createdBy: string;
+        createdAt: string;
+        updatedAt: string;
+      };
+    };
+  };
+  EXPERIMENT_DELETE: {
+    input: { site: string; key: string };
+    output: { site: string; key: string; deleted: boolean };
+  };
+  EXPERIMENT_RESULTS: {
+    input: {
+      site: string;
+      key: string;
+      since?: string | undefined;
+      until?: string | undefined;
+      goals?: string[] | undefined;
+      goalOnDash?: string | undefined;
+    };
+    output: {
+      available: boolean;
+      results: {
+        visitors: { default: number; variant: number };
+        goals: { goal: string; default: number; variant: number }[];
+        timeseries: { date: string; default: number; variant: number }[];
+        stats: {
+          totalParticipants: number;
+          sampleSize: number;
+          probabilityVariantBest: number;
+          probabilityDefaultBest: number;
+        };
+      } | null;
+    };
+  };
   AUTOMATION_CREATE: {
     input: {
       name: string;
@@ -4771,6 +4939,7 @@ export interface StudioToolIO {
                             | "e2e"
                             | "analytics"
                             | "cdn"
+                            | "experiments"
                           )[]
                         | null
                         | undefined;
@@ -4829,6 +4998,7 @@ export interface StudioToolIO {
                 | "e2e"
                 | "analytics"
                 | "cdn"
+                | "experiments"
               )[]
             | null
             | undefined;
@@ -7302,7 +7472,7 @@ export interface StudioToolIO {
       run: {
         id: string;
         organization_id: string;
-        status: "pending" | "failed" | "completed" | "cancelled" | "running";
+        status: "pending" | "failed" | "completed" | "running" | "cancelled";
         config_snapshot: {
           monitorMode: "health_check" | "tool_call" | "full_agent";
           onFailure:
@@ -7343,8 +7513,8 @@ export interface StudioToolIO {
         | "pending"
         | "failed"
         | "completed"
-        | "cancelled"
         | "running"
+        | "cancelled"
         | undefined;
       limit?: number | undefined;
       offset?: number | undefined;
@@ -7353,7 +7523,7 @@ export interface StudioToolIO {
       items: {
         id: string;
         organization_id: string;
-        status: "pending" | "failed" | "completed" | "cancelled" | "running";
+        status: "pending" | "failed" | "completed" | "running" | "cancelled";
         config_snapshot: {
           monitorMode: "health_check" | "tool_call" | "full_agent";
           onFailure:
@@ -7395,7 +7565,7 @@ export interface StudioToolIO {
       run: {
         id: string;
         organization_id: string;
-        status: "pending" | "failed" | "completed" | "cancelled" | "running";
+        status: "pending" | "failed" | "completed" | "running" | "cancelled";
         config_snapshot: {
           monitorMode: "health_check" | "tool_call" | "full_agent";
           onFailure:
@@ -7436,7 +7606,7 @@ export interface StudioToolIO {
       run: {
         id: string;
         organization_id: string;
-        status: "pending" | "failed" | "completed" | "cancelled" | "running";
+        status: "pending" | "failed" | "completed" | "running" | "cancelled";
         config_snapshot: {
           monitorMode: "health_check" | "tool_call" | "full_agent";
           onFailure:
