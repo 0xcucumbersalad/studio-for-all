@@ -1,3 +1,12 @@
+import { useCompactPageLayout } from "@/hooks/use-preferences";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
+  BreadcrumbPage,
+} from "@decocms/ui/components/breadcrumb.tsx";
 import { useParams } from "@tanstack/react-router";
 import { taskSharePath } from "./task-route";
 import { Fragment, useRef, useState, type ReactNode } from "react";
@@ -7,14 +16,7 @@ import {
   DialogContent,
   DialogTitle,
 } from "@decocms/ui/components/dialog.tsx";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@decocms/ui/components/breadcrumb.tsx";
+import { Page } from "@/components/page";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +31,7 @@ import {
 } from "@decocms/ui/components/popover.tsx";
 import { Calendar as DayPickerCalendar } from "@decocms/ui/components/calendar.tsx";
 import { Button } from "@decocms/ui/components/button.tsx";
+import { IconButton } from "@decocms/ui/components/icon-button.tsx";
 import {
   Alert,
   AlertDescription,
@@ -367,7 +370,13 @@ function RecordSection({
         </CollapsibleTrigger>
         {action}
       </div>
-      <CollapsibleContent>{children}</CollapsibleContent>
+      {/* Radix clips this to animate its HEIGHT, and a card inside draws its
+          hairline outside its own box. So the clip box grows by a margin, which
+          leaves the animated height alone, and an inner pad puts the content
+          back where it was. Padding here instead would stop it collapsing. */}
+      <CollapsibleContent className="-mx-2 -mb-2">
+        <div className="px-2 pb-2">{children}</div>
+      </CollapsibleContent>
     </Collapsible>
   );
 }
@@ -442,6 +451,7 @@ function TaskBoardItemEditor({
   onRerun,
   isSaving,
 }: TaskEditorProps) {
+  const compact = useCompactPageLayout();
   const t = useT();
   const { org } = useProjectContext();
   const { agentId } = useParams({ strict: false });
@@ -668,197 +678,218 @@ function TaskBoardItemEditor({
   const contentLocked = !!item && isReportsTask(item);
 
   /** Header row: what the task is on the left, its actions on the right. */
-  const header = (
-    <div className="flex shrink-0 items-center justify-between gap-2 px-6 pb-4 pt-6 sm:px-8">
-      {chrome === "page" ? (
-        /* The page's way back out. The key doubles as the trail's leaf, so
-             there is no separate id chip in this chrome. */
-        <Breadcrumb className="-ml-2">
-          <BreadcrumbList className="text-[15px]">
-            <BreadcrumbItem>
-              {/* A button, not an anchor: leaving flushes a pending autosave
-                    and the board it returns to is a search-param away, not a
-                    document to link to. */}
-              <BreadcrumbLink
-                asChild
-                className="rounded-md px-2 py-1 text-muted-foreground hover:bg-accent"
-              >
-                <button type="button" onClick={close}>
-                  {t("taskBoard.taskDetail.breadcrumbTasks")}
-                </button>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage className="px-2 py-1">
-                {key ?? t("taskBoard.taskDetail.breadcrumbTask")}
-              </BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      ) : /* Null only for a card written before the key backfill, which has
-              no key to show. */
-      key ? (
-        <Button
-          variant="ghost"
-          size="sm"
-          title={key}
-          aria-label={t("taskBoard.taskDialog.copyIdAriaLabel")}
-          /* -ml-2 cancels the button's own padding so the glyph starts on
-                 the pane's 32px gutter, as drawn. */
-          className="-ml-2 gap-2 px-2 text-[15px] text-muted-foreground hover:text-foreground"
-          onClick={() => {
-            copyId(key);
-            toast.success(t("taskBoard.taskDialog.idCopied"));
-          }}
-        >
-          {idCopied ? <Check size={16} /> : <Bookmark size={16} />}
-          {key}
-        </Button>
-      ) : (
-        /* Create mode: the key is minted on save. A placeholder keeps the
-               row from reading as broken. */
-        <span
-          aria-hidden
-          className="flex h-7 items-center gap-2 text-[15px] text-muted-foreground opacity-50"
-        >
-          <Bookmark size={16} />–
+  /** The task's own actions. A page hands them to the page header beside
+   *  its trail; a dialog has no header to give them to. */
+  const actions = (
+    <div className="flex items-center gap-2">
+      {/* Autosave has no button, so this is the only sign of a write. */}
+      {item && isSaving && (
+        <span className="mr-1 text-sm text-muted-foreground">
+          {t("taskBoard.taskDialog.savingLabel")}
         </span>
       )}
-
-      <div className="flex items-center gap-0.5">
-        {/* Autosave has no button, so this is the only sign of a write. */}
-        {item && isSaving && (
-          <span className="mr-1 text-sm text-muted-foreground">
-            {t("taskBoard.taskDialog.savingLabel")}
-          </span>
-        )}
-        {item?.externalUrl && (
-          /* The card's issue in the tracker it came from. It used to be the
+      {item?.externalUrl && (
+        /* The card's issue in the tracker it came from. It used to be the
              first line of the description, which put it in every agent
              prompt — it is a link for a person, so it lives here. */
-          <Button
-            asChild
-            variant="ghost"
-            size="icon-sm"
-            aria-label={t("taskBoard.taskDialog.openInTrackerAriaLabel")}
-            title={item.externalUrl}
-            className="text-muted-foreground hover:text-foreground"
+        <IconButton
+          asChild
+          variant={compact ? "secondary" : "ghost"}
+          label={t("taskBoard.taskDialog.openInTrackerAriaLabel")}
+        >
+          <a href={item.externalUrl} target="_blank" rel="noreferrer">
+            <LinkExternal01 size={16} />
+          </a>
+        </IconButton>
+      )}
+      {item && (
+        <>
+          <IconButton
+            variant={compact ? "secondary" : "ghost"}
+            label={t("taskBoard.taskDialog.shareAriaLabel")}
+            onClick={() => {
+              copyLink(
+                `${window.location.origin}${taskSharePath(org.slug, item, agentId)}`,
+              );
+              toast.success(t("taskBoard.taskDialog.linkCopied"));
+            }}
           >
-            <a href={item.externalUrl} target="_blank" rel="noreferrer">
-              <LinkExternal01 size={16} />
-            </a>
-          </Button>
-        )}
-        {item && (
-          <>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label={t("taskBoard.taskDialog.shareAriaLabel")}
-              title={t("taskBoard.taskDialog.shareTitle")}
-              className="text-muted-foreground hover:text-foreground"
-              onClick={() => {
-                copyLink(
-                  `${window.location.origin}${taskSharePath(org.slug, item, agentId)}`,
-                );
-                toast.success(t("taskBoard.taskDialog.linkCopied"));
-              }}
-            >
-              {linkCopied ? <Check size={16} /> : <Link03 size={16} />}
-            </Button>
-            {/* Non-modal: a modal menu blocks outside pointer events by
+            {linkCopied ? <Check size={16} /> : <Link03 size={16} />}
+          </IconButton>
+          {/* Non-modal: a modal menu blocks outside pointer events by
                     setting `pointer-events: none` on <body>, and half these
                     items unmount the dialog they live in — leaving that style
                     behind with no layer to restore it. */}
-            <DropdownMenu modal={false}>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={t("taskBoard.taskDialog.moreActionsAriaLabel")}
-                  className="text-muted-foreground hover:text-foreground data-[state=open]:bg-accent data-[state=open]:text-foreground"
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              {/* A plain Button, not IconButton: `asChild` has to land on the
+                  button itself, and IconButton would put a Tooltip root in
+                  between, which silently swallows the trigger props. */}
+              <Button
+                variant={compact ? "secondary" : "ghost"}
+                size="icon-sm"
+                aria-label={t("taskBoard.taskDialog.moreActionsAriaLabel")}
+              >
+                <DotsHorizontal size={16} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {onNewChat && (
+                <DropdownMenuItem onSelect={onNewChat}>
+                  <Edit05 size={16} />
+                  {t("taskBoard.taskDialog.newChatButton")}
+                </DropdownMenuItem>
+              )}
+              {showAutoFix && (
+                <DropdownMenuItem onSelect={onAutoFix}>
+                  <Lightning01 size={16} />
+                  {t("taskBoard.taskBoard.autoFix")}
+                </DropdownMenuItem>
+              )}
+              {showRerun && (
+                <DropdownMenuItem onSelect={onRerun}>
+                  <RefreshCw01 size={16} />
+                  {t("taskBoard.taskBoard.rerun")}
+                </DropdownMenuItem>
+              )}
+              {(onNewChat || showAutoFix || showRerun) && (
+                <DropdownMenuSeparator />
+              )}
+              {description && (
+                <DropdownMenuItem onSelect={() => handleCopy(description)}>
+                  {copied ? <Check size={16} /> : <Copy01 size={16} />}
+                  {t("taskBoard.taskDialog.copyDescription")}
+                </DropdownMenuItem>
+              )}
+              {onClone && (
+                <DropdownMenuItem onSelect={onClone}>
+                  <Copy06 size={16} />
+                  {t("taskBoard.taskDialog.cloneTask")}
+                </DropdownMenuItem>
+              )}
+              {onArchive && status !== "archived" && (
+                <DropdownMenuItem
+                  onSelect={() => {
+                    cancelPending();
+                    onArchive();
+                  }}
                 >
-                  <DotsHorizontal size={16} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                {onNewChat && (
-                  <DropdownMenuItem onSelect={onNewChat}>
-                    <Edit05 size={16} />
-                    {t("taskBoard.taskDialog.newChatButton")}
-                  </DropdownMenuItem>
-                )}
-                {showAutoFix && (
-                  <DropdownMenuItem onSelect={onAutoFix}>
-                    <Lightning01 size={16} />
-                    {t("taskBoard.taskBoard.autoFix")}
-                  </DropdownMenuItem>
-                )}
-                {showRerun && (
-                  <DropdownMenuItem onSelect={onRerun}>
-                    <RefreshCw01 size={16} />
-                    {t("taskBoard.taskBoard.rerun")}
-                  </DropdownMenuItem>
-                )}
-                {(onNewChat || showAutoFix || showRerun) && (
-                  <DropdownMenuSeparator />
-                )}
-                {description && (
-                  <DropdownMenuItem onSelect={() => handleCopy(description)}>
-                    {copied ? <Check size={16} /> : <Copy01 size={16} />}
-                    {t("taskBoard.taskDialog.copyDescription")}
-                  </DropdownMenuItem>
-                )}
-                {onClone && (
-                  <DropdownMenuItem onSelect={onClone}>
-                    <Copy06 size={16} />
-                    {t("taskBoard.taskDialog.cloneTask")}
-                  </DropdownMenuItem>
-                )}
-                {onArchive && status !== "archived" && (
-                  <DropdownMenuItem
-                    onSelect={() => {
-                      cancelPending();
-                      onArchive();
-                    }}
-                  >
-                    <Archive size={16} />
-                    {t("taskBoard.taskDialog.archiveTask")}
-                  </DropdownMenuItem>
-                )}
-                {onDelete && (
-                  /* Drop the pending autosave first: flushing it on the
+                  <Archive size={16} />
+                  {t("taskBoard.taskDialog.archiveTask")}
+                </DropdownMenuItem>
+              )}
+              {onDelete && (
+                /* Drop the pending autosave first: flushing it on the
                          way out would write to the row being deleted. */
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onSelect={() => {
-                      cancelPending();
-                      onDelete();
-                    }}
-                  >
-                    <Trash03 size={16} />
-                    {t("taskBoard.taskDialog.deleteTask")}
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </>
-        )}
-        {chrome === "dialog" && (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label={t("taskBoard.taskDialog.closeAriaLabel")}
-            className="text-muted-foreground hover:text-foreground"
-            onClick={close}
-          >
-            <X size={16} />
-          </Button>
-        )}
-      </div>
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => {
+                    cancelPending();
+                    onDelete();
+                  }}
+                >
+                  <Trash03 size={16} />
+                  {t("taskBoard.taskDialog.deleteTask")}
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </>
+      )}
+      {chrome === "dialog" && (
+        <IconButton
+          variant={compact ? "secondary" : "ghost"}
+          label={t("taskBoard.taskDialog.closeAriaLabel")}
+          onClick={close}
+        >
+          <X size={16} />
+        </IconButton>
+      )}
     </div>
   );
+
+  /** Header row: only a DIALOG draws one. A page hands the same three things
+   *  to the page header instead — its trail, its title and its actions — the
+   *  way Library hands over its folder trail. The "Tasks" crumb stays a button
+   *  rather than a link: leaving flushes a pending autosave, and the board it
+   *  returns to is a search-param away. The key doubles as the trail's leaf, so
+   *  a page shows no id chip. */
+  const header =
+    compact && chrome === "page" ? (
+      <>
+        <Page.Breadcrumbs
+          items={[
+            {
+              key: "tasks",
+              label: t("taskBoard.taskDetail.breadcrumbTasks"),
+              onClick: close,
+            },
+          ]}
+        />
+        <Page.Title>
+          {key ?? t("taskBoard.taskDetail.breadcrumbTask")}
+        </Page.Title>
+        <Page.Actions>{actions}</Page.Actions>
+      </>
+    ) : (
+      <div className="flex shrink-0 items-center justify-between gap-2 px-6 pb-4 pt-6 sm:px-8">
+        {/* Null only for a card written before the key backfill, which has
+            no key to show. */}
+        {chrome === "page" ? (
+          <Breadcrumb className="-ml-2">
+            <BreadcrumbList className="text-[15px]">
+              <BreadcrumbItem>
+                {/* A button, not an anchor: leaving flushes a pending autosave
+                    and the board it returns to is a search-param away, not a
+                    document to link to. */}
+                <BreadcrumbLink
+                  asChild
+                  className="rounded-md px-2 py-1 text-muted-foreground hover:bg-accent"
+                >
+                  <button type="button" onClick={close}>
+                    {t("taskBoard.taskDetail.breadcrumbTasks")}
+                  </button>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage className="px-2 py-1">
+                  {key ?? t("taskBoard.taskDetail.breadcrumbTask")}
+                </BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        ) : key ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            title={key}
+            aria-label={t("taskBoard.taskDialog.copyIdAriaLabel")}
+            /* -ml-2 cancels the button's own padding so the glyph starts on
+                 the pane's 32px gutter, as drawn. */
+            className="-ml-2 gap-2 px-2 text-[15px] text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              copyId(key);
+              toast.success(t("taskBoard.taskDialog.idCopied"));
+            }}
+          >
+            {idCopied ? <Check size={16} /> : <Bookmark size={16} />}
+            {key}
+          </Button>
+        ) : (
+          /* Create mode: the key is minted on save. A placeholder keeps the
+               row from reading as broken. */
+          <span
+            aria-hidden
+            className="flex h-7 items-center gap-2 text-[15px] text-muted-foreground opacity-50"
+          >
+            <Bookmark size={16} />–
+          </span>
+        )}
+
+        {actions}
+      </div>
+    );
 
   const body = (
     <>
@@ -1382,7 +1413,7 @@ function TaskBoardItemEditor({
                               "taskBoard.taskDialog.removeTagAriaLabel",
                               { name: tag.name },
                             )}
-                            className="-mr-0.5 flex size-3.5 items-center justify-center rounded-sm text-muted-foreground hover:bg-background hover:text-foreground"
+                            className="-mr-0.5 flex size-3.5 items-center justify-center classic:rounded-sm compact:rounded-lg text-muted-foreground hover:bg-background hover:text-foreground"
                             onClick={() => {
                               patch({
                                 tagIds: tagIds.filter((id) => id !== tagId),
@@ -1398,7 +1429,7 @@ function TaskBoardItemEditor({
                       <button
                         type="button"
                         aria-label={t("taskBoard.taskDialog.addTagButton")}
-                        className="flex size-7 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        className="flex size-7 items-center justify-center classic:rounded-md compact:rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                       >
                         <Plus size={14} />
                       </button>

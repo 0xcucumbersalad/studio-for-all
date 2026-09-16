@@ -1,3 +1,6 @@
+import { LayoutLeft } from "@untitledui/icons";
+import { useSidebar } from "@decocms/ui/components/sidebar.tsx";
+import { ToolbarIconButton } from "@/components/toolbar-icon-button";
 /** Binds project and thread runtime to ChatLayout and its routed content. */
 
 import {
@@ -52,15 +55,16 @@ import {
 } from "@/components/thread/github/use-releases";
 import { useT } from "@/i18n/use-t.ts";
 import { Panel } from "@/components/panel";
-import { ChatLayout, useChatLayout } from "@/components/chat-layout";
+import { useCompactPageLayout } from "@/hooks/use-preferences";
+import { useIsMobile } from "@decocms/ui/hooks/use-mobile.ts";
 import { PanelCollapseToggle } from "@/components/chat-layout/toggle-buttons";
+import { ChatLayout, useChatLayout } from "@/components/chat-layout";
 import { ThreadsMenu } from "@/components/chat/threads-menu";
 import { NewChatCrumb } from "@/components/header/shell-breadcrumb";
 import { DevAgentControl } from "@/components/dev-agent/dev-agent-control";
 import { MainPanelTabsBar } from "@/layouts/main-panel-tabs/main-panel-tabs-bar";
 import { useActivePanelTabId } from "@/layouts/main-panel-tabs/use-panel-navigate";
 import { resolveThreadSessionIdentity } from "./session-identity";
-import { useIsMobile } from "@decocms/ui/hooks/use-mobile.ts";
 import { MobileMainPanelTabSelect } from "@/layouts/main-panel-tabs/mobile-main-panel-tab-select";
 import { SandboxEventsProvider } from "@/components/sandbox/hooks/sandbox-events-context.tsx";
 import { useSessionRuntime } from "@/hooks/use-session-runtime";
@@ -463,15 +467,29 @@ function VmEventsBridge({
 // ---------------------------------------------------------------------------
 
 function ThreadTopbar() {
+  const compact = useCompactPageLayout();
   const layout = useChatLayout();
+  const t = useT();
+  const { toggleSidebar } = useSidebar();
+  const { virtualMcpId, taskId } = useChatTask();
   return (
-    <Panel.Topbar>
+    <Panel.Topbar className="compact:border-b compact:border-border/60 compact:px-3">
       <Panel.Topbar.Left>
+        <ToolbarIconButton
+          className="classic:hidden md:hidden"
+          onClick={toggleSidebar}
+          aria-label={t("layouts.shellControls.toggleSidebar")}
+        >
+          <LayoutLeft size={16} />
+        </ToolbarIconButton>
         <ThreadsMenu />
       </Panel.Topbar.Left>
+      <div className="classic:hidden min-w-0 md:hidden">
+        <MobileMainPanelTabSelect virtualMcpId={virtualMcpId} taskId={taskId} />
+      </div>
       <Panel.Topbar.Right className="shrink-0">
         <NewChatCrumb />
-        {!layout.contentOpen && (
+        {!compact && !layout.contentOpen && (
           <PanelCollapseToggle
             side="right"
             open={layout.contentOpen}
@@ -492,14 +510,15 @@ function ThreadSessionContent({
   onNewTaskRef: React.MutableRefObject<(() => void) | null>;
   createNewTask: () => void;
 }) {
-  const isMobile = useIsMobile();
   const { virtualMcpId, taskId } = useChatTask();
+  const compact = useCompactPageLayout();
+  const isMobile = useIsMobile();
   const entity = useVirtualMCP(virtualMcpId);
   const contentKey = useActivePanelTabId() ?? "overview";
 
   return (
     <>
-      {isMobile && (
+      {!compact && isMobile && (
         <Panel.Topbar.Center.Portal>
           <MobileMainPanelTabSelect
             virtualMcpId={virtualMcpId}

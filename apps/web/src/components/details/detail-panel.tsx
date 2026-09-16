@@ -1,10 +1,31 @@
-import type { ReactNode } from "react";
+import { useCompactPageLayout } from "@/hooks/use-preferences";
 import { SidebarTrigger } from "@decocms/ui/components/sidebar.tsx";
 import { cn } from "@decocms/ui/lib/utils.ts";
+import type { ReactNode } from "react";
 import { Panel } from "@/components/panel";
+import { Page } from "@/components/page";
 
-/** Detail views supply their tabs and actions through the same Panel slots as routes. */
-export function DetailPanel({
+/** Detail views contribute to the surrounding page instead of nesting a second header. */
+function CompactDetailPanel({
+  children,
+  leading,
+}: {
+  children: ReactNode;
+  leading?: ReactNode;
+}) {
+  return (
+    <Page>
+      {leading && (
+        <Panel.Toolbar.Left.Portal fallback={leading}>
+          {leading}
+        </Panel.Toolbar.Left.Portal>
+      )}
+      <Page.Content>{children}</Page.Content>
+    </Page>
+  );
+}
+
+function ClassicDetailPanel({
   children,
   leading,
   hideTopbar = false,
@@ -31,5 +52,18 @@ export function DetailPanel({
       </Panel.Topbar>
       <Panel.Content mode="scroll">{children}</Panel.Content>
     </Panel>
+  );
+}
+
+export function DetailPanel(props: {
+  children: ReactNode;
+  leading?: ReactNode;
+  hideTopbar?: boolean;
+}) {
+  const compact = useCompactPageLayout();
+  return compact ? (
+    <CompactDetailPanel {...props} />
+  ) : (
+    <ClassicDetailPanel {...props} />
   );
 }

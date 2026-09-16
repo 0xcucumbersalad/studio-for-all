@@ -485,6 +485,7 @@ const orgHomeRoute = createRoute({
   getParentRoute: () => threadSessionRoute,
   path: "/home",
   staticData: {
+    pageTitle: "sidebar.navDestinations.home",
     defaultMain: "overview",
     mainView: "overview",
   },
@@ -544,7 +545,11 @@ const agentOverviewRoute = createRoute({
   errorComponent: ChatLayoutError,
   getParentRoute: () => agentWorkspaceRoute,
   path: "/",
-  staticData: { defaultMain: "overview", mainView: "overview" },
+  staticData: {
+    pageTitle: "page.overview",
+    defaultMain: "overview",
+    mainView: "overview",
+  },
   component: lazyRouteComponent(
     () => import("./routes/workspace/agent-overview.tsx"),
   ),
@@ -556,6 +561,7 @@ const projectTasksRoute = createRoute({
   getParentRoute: () => agentWorkspaceRoute,
   path: "/tasks/{-$taskKey}",
   staticData: {
+    pageTitle: "sidebar.navDestinations.tasks",
     defaultMain: "board",
     mainView: "board",
   },
@@ -589,6 +595,7 @@ const projectReportsRoute = createRoute({
   getParentRoute: () => agentWorkspaceRoute,
   path: "/reports",
   staticData: {
+    pageTitle: "sidebar.navDestinations.reports",
     defaultMain: "reports",
     mainView: "reports",
   },
@@ -607,6 +614,7 @@ const agentSiteEditorRoute = createRoute({
   getParentRoute: () => agentWorkspaceRoute,
   path: "/site-editor",
   staticData: {
+    pageTitle: "sidebar.projectNav.siteEditor",
     defaultMain: "site-editor",
     mainView: "site-editor",
   },
@@ -665,6 +673,7 @@ const agentAutomationsRoute = createRoute({
   getParentRoute: () => agentWorkspaceRoute,
   path: "/automations",
   staticData: {
+    pageTitle: "settings.nav.automations",
     defaultMain: "automations",
     mainView: "automations",
   },
@@ -693,6 +702,7 @@ const agentAutomationRoute = createRoute({
   getParentRoute: () => agentWorkspaceRoute,
   path: "/automations/$automationId",
   staticData: {
+    pageTitle: "settings.nav.automations",
     defaultMain: "automations",
     mainView: "automation",
   },
@@ -710,6 +720,7 @@ const agentSettingsRoute = createRoute({
   getParentRoute: () => agentWorkspaceRoute,
   path: "/settings",
   staticData: {
+    pageTitle: "sidebar.navDestinations.settings",
     defaultMain: "settings",
     mainView: "settings",
   },
@@ -724,6 +735,7 @@ const agentAssetsRoute = createRoute({
   getParentRoute: () => agentWorkspaceRoute,
   path: "/assets",
   staticData: {
+    pageTitle: "common.mainPanelTabs.assets",
     defaultMain: "assets",
     mainView: "assets",
   },
@@ -738,6 +750,7 @@ const agentGitRoute = createRoute({
   getParentRoute: () => agentWorkspaceRoute,
   path: "/git",
   staticData: {
+    pageTitle: "common.mainPanelTabs.reviewChanges",
     defaultMain: "git",
     mainView: "git",
   },
@@ -752,6 +765,7 @@ const agentHostingRoute = createRoute({
   getParentRoute: () => agentWorkspaceRoute,
   path: "/hosting",
   staticData: {
+    pageTitle: "common.mainPanelTabs.hosting",
     defaultMain: "hosting",
     mainView: "hosting",
   },
@@ -766,6 +780,7 @@ const agentE2eRoute = createRoute({
   getParentRoute: () => agentWorkspaceRoute,
   path: "/e2e",
   staticData: {
+    pageTitle: "common.mainPanelTabs.e2e",
     defaultMain: "e2e",
     mainView: "e2e",
   },
@@ -780,6 +795,7 @@ const agentAnalyticsRoute = createRoute({
   getParentRoute: () => agentWorkspaceRoute,
   path: "/analytics",
   staticData: {
+    pageTitle: "common.mainPanelTabs.analytics",
     defaultMain: "analytics",
     mainView: "analytics",
   },
@@ -811,6 +827,7 @@ const agentMonitorRoute = createRoute({
    * available to the compatibility catch-all below. */
   path: "/cdn",
   staticData: {
+    pageTitle: "common.mainPanelTabs.cdn",
     defaultMain: "cdn",
     mainView: "cdn",
   },
@@ -824,7 +841,7 @@ const agentAppRoute = createRoute({
   errorComponent: ChatLayoutError,
   getParentRoute: () => agentWorkspaceRoute,
   path: "/apps/$connectionId/$toolName",
-  staticData: { defaultMain: "app", mainView: "app" },
+  staticData: { pageTitle: "page.app", defaultMain: "app", mainView: "app" },
   component: lazyRouteComponent(
     () => import("./routes/workspace/agent-app.tsx"),
   ),
@@ -835,10 +852,7 @@ const agentViewRoute = createRoute({
   errorComponent: ChatLayoutError,
   getParentRoute: () => agentWorkspaceRoute,
   path: "/views/$viewId",
-  staticData: {
-    defaultMain: "view",
-    mainView: "view",
-  },
+  staticData: { pageTitle: "page.view", defaultMain: "view", mainView: "view" },
   component: lazyRouteComponent(
     () => import("./routes/workspace/agent-view.tsx"),
   ),
@@ -849,10 +863,7 @@ const agentOutputFileRoute = createRoute({
   errorComponent: ChatLayoutError,
   getParentRoute: () => agentWorkspaceRoute,
   path: "/outputs/file",
-  staticData: {
-    defaultMain: "file",
-    mainView: "file",
-  },
+  staticData: { pageTitle: "page.file", defaultMain: "file", mainView: "file" },
   validateSearch: z.object({ key: z.string().optional() }),
   component: lazyRouteComponent(
     () => import("./routes/workspace/agent-file.tsx"),
@@ -865,6 +876,7 @@ const agentOutputDeckRoute = createRoute({
   getParentRoute: () => agentWorkspaceRoute,
   path: "/outputs/deck",
   staticData: {
+    pageTitle: "page.document",
     defaultMain: "deck",
     mainView: "deck",
   },
@@ -880,6 +892,7 @@ const agentLibraryFileRoute = createRoute({
   getParentRoute: () => agentWorkspaceRoute,
   path: "/library/file",
   staticData: {
+    pageTitle: "page.file",
     defaultMain: "library-file",
     mainView: "library-file",
   },
@@ -895,6 +908,7 @@ const agentConnectSourcesRoute = createRoute({
   getParentRoute: () => agentWorkspaceRoute,
   path: "/connect-sources",
   staticData: {
+    pageTitle: "settings.nav.connect",
     defaultMain: "connect-sources",
     mainView: "connect-sources",
   },
@@ -985,6 +999,7 @@ const tasksRoute = createRoute({
   getParentRoute: () => threadSessionRoute,
   path: "/tasks/{-$taskKey}",
   staticData: {
+    pageTitle: "sidebar.navDestinations.tasks",
     defaultMain: "board",
     mainView: "board",
   },
@@ -1032,6 +1047,7 @@ const reportsRoute = createRoute({
   getParentRoute: () => threadSessionRoute,
   path: "/reports",
   staticData: {
+    pageTitle: "sidebar.navDestinations.reports",
     defaultMain: "reports",
     mainView: "reports",
   },
@@ -1051,6 +1067,7 @@ const libraryRoute = createRoute({
   getParentRoute: () => threadSessionRoute,
   path: "/library",
   staticData: {
+    pageTitle: "sidebar.navDestinations.library",
     defaultMain: "files",
     mainView: "files",
   },
@@ -1064,7 +1081,11 @@ const discoverRoute = createRoute({
   errorComponent: ChatLayoutError,
   getParentRoute: () => threadSessionRoute,
   path: "/discover",
-  staticData: { defaultMain: "discover", mainView: "discover" },
+  staticData: {
+    pageTitle: "sidebar.navDestinations.discover",
+    defaultMain: "discover",
+    mainView: "discover",
+  },
   component: lazyRouteComponent(
     () => import("./routes/workspace/discover.tsx"),
   ),
@@ -1137,6 +1158,7 @@ const taskKeyRoute = createRoute({
 // ============================================
 
 const settingsRoute = createRoute({
+  staticData: { pageTitle: "sidebar.navDestinations.settings" },
   getParentRoute: () => orgRoute,
   path: "/settings",
   /** Panel-area loader, for the same reason as `threadRoute`: the sidebar
@@ -1159,6 +1181,7 @@ const settingsIndexRoute = createRoute({
 
 // Operations: Connections
 const connectionsRoute = createRoute({
+  staticData: { pageTitle: "settings.nav.connections" },
   getParentRoute: () => settingsRoute,
   path: "/connections",
   component: lazyRouteComponent(() => import("./routes/orgs/connections.tsx")),
@@ -1171,6 +1194,7 @@ const connectionsRoute = createRoute({
 });
 
 const connectionDetailRoute = createRoute({
+  staticData: { pageTitle: "settings.nav.connections" },
   getParentRoute: () => settingsRoute,
   path: "/connections/$appSlug",
   component: lazyRouteComponent(
@@ -1184,6 +1208,7 @@ const connectionDetailRoute = createRoute({
 });
 
 const collectionDetailRoute = createRoute({
+  staticData: { pageTitle: "page.item" },
   getParentRoute: () => settingsRoute,
   path: "/connections/$appSlug/$collectionName/$itemId",
   component: lazyRouteComponent(
@@ -1198,6 +1223,7 @@ const collectionDetailRoute = createRoute({
 
 // Operations: Monitor
 const monitoringRoute = createRoute({
+  staticData: { pageTitle: "orgs.monitoring.title" },
   getParentRoute: () => settingsRoute,
   path: "/monitor",
   component: lazyRouteComponent(
@@ -1225,6 +1251,7 @@ const monitoringRoute = createRoute({
 
 // Organization settings pages
 const settingsGeneralRoute = createRoute({
+  staticData: { pageTitle: "settings.nav.general" },
   getParentRoute: () => settingsRoute,
   path: "/general",
   component: lazyRouteComponent(
@@ -1233,6 +1260,7 @@ const settingsGeneralRoute = createRoute({
 });
 
 const settingsConnectRoute = createRoute({
+  staticData: { pageTitle: "settings.nav.connect" },
   getParentRoute: () => settingsRoute,
   path: "/connect",
   pendingComponent: settingsGroupPendingComponent("connect"),
@@ -1242,6 +1270,7 @@ const settingsConnectRoute = createRoute({
 });
 
 const settingsAiProvidersRoute = createRoute({
+  staticData: { pageTitle: "settings.nav.billing" },
   getParentRoute: () => settingsRoute,
   path: "/ai-providers",
   pendingComponent: settingsGroupPendingComponent("billing"),
@@ -1252,6 +1281,7 @@ const settingsAiProvidersRoute = createRoute({
 
 // Redirects old /settings/billing links to the merged AI Providers page.
 const settingsBillingRoute = createRoute({
+  staticData: { pageTitle: "settings.nav.billing" },
   getParentRoute: () => settingsRoute,
   path: "/billing",
   beforeLoad: ({ params }) => {
@@ -1263,6 +1293,7 @@ const settingsBillingRoute = createRoute({
 });
 
 const settingsInfraBillingRoute = createRoute({
+  staticData: { pageTitle: "settings.nav.billing" },
   getParentRoute: () => settingsRoute,
   path: "/infra-billing",
   pendingComponent: settingsGroupPendingComponent("billing"),
@@ -1272,6 +1303,7 @@ const settingsInfraBillingRoute = createRoute({
 });
 
 const settingsSecretsRoute = createRoute({
+  staticData: { pageTitle: "settings.nav.secrets" },
   getParentRoute: () => settingsRoute,
   path: "/secrets",
   component: lazyRouteComponent(
@@ -1280,6 +1312,7 @@ const settingsSecretsRoute = createRoute({
 });
 
 const settingsApiKeysRoute = createRoute({
+  staticData: { pageTitle: "settings.nav.connect" },
   getParentRoute: () => settingsRoute,
   path: "/api-keys",
   pendingComponent: settingsGroupPendingComponent("connect"),
@@ -1289,6 +1322,7 @@ const settingsApiKeysRoute = createRoute({
 });
 
 const settingsBucketsRoute = createRoute({
+  staticData: { pageTitle: "settings.nav.storage" },
   getParentRoute: () => settingsRoute,
   path: "/buckets",
   pendingComponent: settingsGroupPendingComponent("storage"),
@@ -1298,6 +1332,7 @@ const settingsBucketsRoute = createRoute({
 });
 
 const settingsRepositoriesRoute = createRoute({
+  staticData: { pageTitle: "settings.nav.repositories" },
   getParentRoute: () => settingsRoute,
   path: "/repositories",
   validateSearch: z.object({
@@ -1312,6 +1347,7 @@ const settingsRepositoriesRoute = createRoute({
 });
 
 const settingsSyncedReposRoute = createRoute({
+  staticData: { pageTitle: "settings.nav.storage" },
   getParentRoute: () => settingsRoute,
   path: "/synced-repos",
   pendingComponent: settingsGroupPendingComponent("storage"),
@@ -1321,6 +1357,7 @@ const settingsSyncedReposRoute = createRoute({
 });
 
 const settingsTaskBoardRoute = createRoute({
+  staticData: { pageTitle: "settings.nav.tasks" },
   getParentRoute: () => settingsRoute,
   path: "/task-board",
   component: lazyRouteComponent(
@@ -1341,6 +1378,7 @@ const settingsTasksRoute = createRoute({
 });
 
 const settingsMembersRoute = createRoute({
+  staticData: { pageTitle: "settings.nav.members" },
   getParentRoute: () => settingsRoute,
   path: "/members",
   pendingComponent: settingsGroupPendingComponent("members"),
@@ -1350,6 +1388,7 @@ const settingsMembersRoute = createRoute({
 });
 
 const settingsRolesRoute = createRoute({
+  staticData: { pageTitle: "settings.nav.members" },
   getParentRoute: () => settingsRoute,
   path: "/roles",
   pendingComponent: settingsGroupPendingComponent("members"),
@@ -1364,12 +1403,14 @@ const settingsRolesRoute = createRoute({
 });
 
 const settingsSsoRoute = createRoute({
+  staticData: { pageTitle: "settings.nav.security" },
   getParentRoute: () => settingsRoute,
   path: "/sso",
   component: lazyRouteComponent(() => import("./routes/orgs/settings/sso.tsx")),
 });
 
 const settingsProfileRoute = createRoute({
+  staticData: { pageTitle: "settings.nav.profile" },
   getParentRoute: () => settingsRoute,
   path: "/profile",
   component: lazyRouteComponent(
@@ -1378,6 +1419,7 @@ const settingsProfileRoute = createRoute({
 });
 
 const settingsStoreRoute = createRoute({
+  staticData: { pageTitle: "settings.nav.store" },
   getParentRoute: () => settingsRoute,
   path: "/store",
   component: lazyRouteComponent(
@@ -1386,6 +1428,7 @@ const settingsStoreRoute = createRoute({
 });
 
 const settingsRegistryRoute = createRoute({
+  staticData: { pageTitle: "settings.nav.store" },
   getParentRoute: () => settingsRoute,
   path: "/registry",
   component: lazyRouteComponent(
@@ -1394,6 +1437,7 @@ const settingsRegistryRoute = createRoute({
 });
 
 const settingsStoreRegistryRoute = createRoute({
+  staticData: { pageTitle: "settings.nav.store" },
   getParentRoute: () => settingsRoute,
   path: "/store/registry",
   component: lazyRouteComponent(
@@ -1407,12 +1451,14 @@ const settingsStoreRegistryRoute = createRoute({
 
 // Agents list (view all)
 const settingsAgentsRoute = createRoute({
+  staticData: { pageTitle: "settings.nav.agents" },
   getParentRoute: () => settingsRoute,
   path: "/agents",
   component: lazyRouteComponent(() => import("./routes/agents-list.tsx")),
 });
 
 const settingsAutomationsRoute = createRoute({
+  staticData: { pageTitle: "settings.nav.automations" },
   getParentRoute: () => settingsRoute,
   path: "/automations",
   component: lazyRouteComponent(
@@ -1421,6 +1467,7 @@ const settingsAutomationsRoute = createRoute({
 });
 
 const settingsSkillsRoute = createRoute({
+  staticData: { pageTitle: "settings.nav.skills" },
   getParentRoute: () => settingsRoute,
   path: "/skills",
   component: lazyRouteComponent(

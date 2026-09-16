@@ -1,3 +1,5 @@
+import { useCompactPageLayout } from "@/hooks/use-preferences";
+import { Panel } from "@/components/panel";
 import {
   getCapabilitySections,
   isCapabilityEnabled,
@@ -71,11 +73,16 @@ import {
 } from "@/components/settings/settings-section";
 import {
   AlertTriangle,
+  Building02,
   ChevronDown,
   ChevronRight,
+  CpuChip01,
+  Folder,
   Lock01,
   Plus,
+  Users03,
   X,
+  ZapSquare,
 } from "@untitledui/icons";
 
 // ============================================================================
@@ -1452,6 +1459,7 @@ function RoleDetailPageInner({
   members: MemberLike[];
   connections: ConnectionEntity[];
 }) {
+  const compact = useCompactPageLayout();
   const t = useT();
   const { locator } = useProjectContext();
   const orgAuth = useOrgAuthClient();
@@ -1627,16 +1635,30 @@ function RoleDetailPageInner({
           {
             id: "mcp" as const,
             label: t("settings.orgRoleDetail.mcpPermissions"),
+            icon: ZapSquare,
           },
         ]
       : []),
     {
       id: "org" as const,
       label: t("settings.orgRoleDetail.organizationPermissions"),
+      icon: Building02,
     },
-    { id: "models" as const, label: t("settings.orgRoleDetail.models") },
-    { id: "projects" as const, label: t("settings.orgRoleDetail.projects") },
-    { id: "members" as const, label: t("settings.orgRoleDetail.members") },
+    {
+      id: "models" as const,
+      label: t("settings.orgRoleDetail.models"),
+      icon: CpuChip01,
+    },
+    {
+      id: "projects" as const,
+      label: t("settings.orgRoleDetail.projects"),
+      icon: Folder,
+    },
+    {
+      id: "members" as const,
+      label: t("settings.orgRoleDetail.members"),
+      icon: Users03,
+    },
   ];
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -1722,24 +1744,43 @@ function RoleDetailPageInner({
               </div>
             </Page.Title>
 
-            <div className="flex items-center gap-2">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => handleTabChange(tab.id)}
-                  className={cn(
-                    "h-7 px-2 text-sm rounded-lg border border-input transition-colors inline-flex items-center",
-                    activeTab === tab.id
-                      ? "bg-accent border-border text-foreground"
-                      : "bg-transparent text-muted-foreground hover:border-border hover:bg-accent/50 hover:text-foreground",
-                  )}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
+            {compact ? (
+              <>
+                <Panel.Toolbar.Left.Portal>
+                  <Page.Tabs>
+                    {tabs.map((tab) => (
+                      <Page.Tab
+                        key={tab.id}
+                        active={activeTab === tab.id}
+                        onClick={() => handleTabChange(tab.id)}
+                      >
+                        {tab.label}
+                      </Page.Tab>
+                    ))}
+                  </Page.Tabs>
+                </Panel.Toolbar.Left.Portal>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2">
+                  {tabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => handleTabChange(tab.id)}
+                      className={cn(
+                        "h-7 px-2 text-sm rounded-lg border border-input transition-colors inline-flex items-center",
+                        activeTab === tab.id
+                          ? "bg-accent border-border text-foreground"
+                          : "bg-transparent text-muted-foreground hover:border-border hover:bg-accent/50 hover:text-foreground",
+                      )}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
             <div className="flex items-center justify-between gap-3">
               <SearchInput
                 value={searchQuery}

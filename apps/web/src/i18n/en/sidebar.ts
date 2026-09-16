@@ -1,4 +1,5 @@
 export const sidebar = {
+  "sidebar.projects.addProject": "Add project",
   "sidebar.archiveWorktreeDialog.cancel": "Cancel",
   "sidebar.archiveWorktreeDialog.confirm": "Continue",
   "sidebar.archiveWorktreeDialog.reclaimFailed":
