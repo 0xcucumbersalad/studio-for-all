@@ -4,6 +4,7 @@ import { SettingsTab } from "@/layouts/main-panel-tabs/settings-tab";
 import { useControlPlaneViews } from "@/hooks/use-organization-settings";
 import { useRouteVirtualMcpId } from "@/layouts/thread-route";
 import { usePublicConfig } from "@/hooks/use-public-config";
+import { FeatureGate } from "@/components/paywall/feature-gate";
 
 function AgentMonitorContent() {
   const virtualMcpId = useRouteVirtualMcpId();
@@ -20,7 +21,9 @@ function AgentMonitorContent() {
 export default function AgentMonitorRoute() {
   return (
     <ChatLayout.Content>
-      <AgentMonitorContent />
+      <FeatureGate feature="monitoring">
+        <AgentMonitorContent />
+      </FeatureGate>
     </ChatLayout.Content>
   );
 }

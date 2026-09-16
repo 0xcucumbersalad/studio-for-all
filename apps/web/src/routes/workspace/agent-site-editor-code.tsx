@@ -1,4 +1,5 @@
 import { AgentViewGuard } from "./agent-view-guard";
+import { FeatureGate } from "@/components/paywall/feature-gate";
 import { useSearch } from "@tanstack/react-router";
 import { CodeTab } from "@/layouts/main-panel-tabs/code-tab";
 
@@ -10,7 +11,9 @@ export default function CodeRoute() {
       : undefined;
   return (
     <AgentViewGuard tabId="code">
-      <CodeTab openPath={file ?? null} />
+      <FeatureGate feature="cms">
+        <CodeTab openPath={file ?? null} />
+      </FeatureGate>
     </AgentViewGuard>
   );
 }
