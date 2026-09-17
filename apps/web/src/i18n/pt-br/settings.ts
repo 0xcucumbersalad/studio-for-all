@@ -83,20 +83,39 @@ export const settings = {
   "settings.jira.noColumnsYet": "Este board ainda não tem colunas",
   "settings.jira.columnsFailed":
     "Não foi possível carregar as colunas do board",
-  "settings.jira.testRunLabel": "Testar em uma issue",
+  "settings.jira.testRunLabel": "Rodar na mão",
   "settings.jira.testRunDescription":
-    "Rode o agente em uma única issue agora, sem regra e sem habilitar a integração \u2014 assim você vê o que um prompt faz antes que ele rode em toda issue que entra em um status.",
-  "settings.jira.testRunIssuePlaceholder": "ABC-123 ou um link",
+    "Rode o agente em uma issue ou num lote agora, sem regra e sem habilitar a integração \u2014 assim você vê o que um prompt faz antes que ele rode em toda issue que entra em um status.",
+  "settings.jira.issueKeysPlaceholder":
+    "ABC-123, ou um link — um por linha, ou separados por vírgula",
+  "settings.jira.issueKeysCount": "{count} issue(s)",
+  "settings.jira.issueKeysUnreadable": "não consegui ler: {items}",
   "settings.jira.testRunIssueAriaLabel": "Chave ou link da issue do Jira",
-  "settings.jira.testRun": "Rodar agente",
+  "settings.jira.testRun": "Rodar agente {count}",
   "settings.jira.testRunRunning": "Iniciando\u2026",
-  "settings.jira.testRunStarted": "Agente iniciado em {issueKey}",
-  "settings.jira.testRunTookOver":
-    "Agente reiniciado em {issueKey} \u2014 o run que já estava nela foi interrompido",
+  "settings.jira.testRunStarted": "Iniciado em",
   "settings.jira.testRunFailed": "Não foi possível iniciar o run",
   "settings.jira.testRunHelp":
     "Este é um run de verdade: o agente lê a issue real, comenta nela e pode movê-la. Rodar de novo interrompe o run que ainda estiver trabalhando nessa issue. Digite “/” para inserir a mesma skill que a regra da coluna usaria.",
   "settings.jira.testRunWatch": "Ver os runs no Monitor",
+  "settings.jira.mergeLabel": "Mergear os pull requests",
+  "settings.jira.mergeDescription":
+    "Mergeia o pull request que cada issue carrega como web link. Um PR verde mergeia na hora e não custa run \u2014 só um conflito dispara uma, pra rebasear e empurrar o mesmo PR.",
+  "settings.jira.mergeIssueAriaLabel": "Chaves ou links das issues a mergear",
+  "settings.jira.merge": "Mergear {count}",
+  "settings.jira.mergeRunning": "Mergeando\u2026",
+  "settings.jira.mergeMerged": "Mergeado",
+  "settings.jira.mergeResolving":
+    "conflito \u2014 um agent está rebaseando; mergeie de novo quando terminar",
+  "settings.jira.mergeNoPr": "sem pull request nesta issue",
+  "settings.jira.mergeStarted": "Mergeando",
+  "settings.jira.mergeWhereResults":
+    "O que cada pull request fez sai como comentário na issue \u2014 o lote segue mesmo se você sair desta página.",
+  "settings.jira.mergeNotOpen":
+    "o PR mais novo dela está fechado \u2014 alguém fechou, então ressuscitar um anterior é decisão de pessoa",
+  "settings.jira.mergeFailed": "Não consegui mergear",
+  "settings.jira.mergeHelp":
+    "Mergeados na ordem dada, porque mergear um move a base do próximo.",
   "settings.syncedRepos.pageDescription":
     "Repositórios Git espelhados em pastas somente leitura da biblioteca, sincronizados a cada poucos minutos. Ótimo para um repo de skills compartilhado.",
   "settings.syncedRepos.addRepo": "Adicionar repo",
