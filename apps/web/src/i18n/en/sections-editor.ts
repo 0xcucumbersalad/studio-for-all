@@ -209,7 +209,6 @@ export const sectionsEditor = {
   "sectionsEditor.sectionsEditor.couldNotRemoveVariants":
     "Could not remove variants.",
   "sectionsEditor.sectionsEditor.editSeo": "Edit SEO",
-  "sectionsEditor.sectionsEditor.editingBreadcrumb": "Editing breadcrumb",
   "sectionsEditor.sectionsEditor.editingInVariant":
     "Editing in variant: {variant}",
   "sectionsEditor.sectionsEditor.failedToRenameVariant":

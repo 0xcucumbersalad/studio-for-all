@@ -4,6 +4,7 @@ import {
   ChevronRight,
   DotsHorizontal,
   Globe01,
+  Cube01,
   LayoutAlt01,
 } from "@untitledui/icons";
 import {
@@ -44,6 +45,7 @@ import { FieldLabel } from "./field-label";
 import type { FieldProps } from "./field-props";
 
 import { toast } from "sonner";
+import { useCompactPageLayout } from "@/hooks/use-preferences";
 import { useT } from "@/i18n/use-t.ts";
 import { MakeReusableModal } from "../make-reusable-modal";
 import { SchemaForm } from "../schema-form";
@@ -108,6 +110,7 @@ function CollapsibleLoaderConfig({
   onMakeGlobal?: () => void;
 }) {
   const t = useT();
+  const DetachIcon = useCompactPageLayout() ? Cube01 : LayoutAlt01;
   const contentId = `${path}-loader-config`;
 
   return (
@@ -151,7 +154,7 @@ function CollapsibleLoaderConfig({
             <DropdownMenuContent align="end" className="w-48">
               {globalBlockKey && onDetach && (
                 <DropdownMenuItem onClick={onDetach}>
-                  <LayoutAlt01 className="h-4 w-4" />
+                  <DetachIcon className="h-4 w-4" />
                   {t("sectionsEditor.anyOfField.detach")}
                 </DropdownMenuItem>
               )}
