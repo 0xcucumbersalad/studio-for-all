@@ -11,6 +11,7 @@ import { useScopeId } from "@/hooks/use-project-scope";
 import { isSurfaceTab } from "@/layouts/main-panel-tabs/source-system-tabs";
 import { useActivePanelTabId } from "@/layouts/main-panel-tabs/use-panel-navigate";
 import { useReleaseSeenState } from "@/hooks/use-release-seen-state";
+import { usePreferences } from "@/hooks/use-preferences";
 import { useT } from "@/i18n/use-t.ts";
 import { authClient } from "@/lib/auth-client";
 import { RELEASES } from "@/lib/release-feed";
@@ -67,6 +68,7 @@ export function FloatingReleaseCard() {
   const onSiteEditor = inProject && !!activeTab && isSurfaceTab(activeTab);
   const { data: session } = authClient.useSession();
   const { isSeen, markSeen } = useReleaseSeenState();
+  const [, setPreferences] = usePreferences();
   const [downloadOpen, setDownloadOpen] = useState(false);
   const now = Date.now();
   const candidate = pickFloatingCandidate(now);
@@ -88,6 +90,13 @@ export function FloatingReleaseCard() {
   const startTour = () => {
     markSeen(candidate.id);
     startLayoutTour(t, { onOrgHome, inProject, onSiteEditor });
+  };
+
+  /** Preference first, `markSeen` second — marking seen unmounts this card, so
+   *  the write is issued while the hook that owns it is still mounted. */
+  const enableNewLayout = () => {
+    setPreferences((prev) => ({ ...prev, compactPageLayout: true }));
+    markSeen(candidate.id);
   };
 
   return (
@@ -118,6 +127,10 @@ export function FloatingReleaseCard() {
             </Button>
           ) : candidate.cta.action === "start-tour" ? (
             <Button size="sm" onClick={startTour}>
+              {candidate.cta.label}
+            </Button>
+          ) : candidate.cta.action === "enable-new-layout" ? (
+            <Button size="sm" onClick={enableNewLayout}>
               {candidate.cta.label}
             </Button>
           ) : (
