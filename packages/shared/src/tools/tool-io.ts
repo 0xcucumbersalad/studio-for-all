@@ -737,6 +737,7 @@ export interface StudioToolIO {
         resolved: boolean;
         createdAt: string;
         updatedAt: string;
+        threadId?: string | null | undefined;
       }[];
     };
   };
@@ -756,6 +757,7 @@ export interface StudioToolIO {
         resolved: boolean;
         createdAt: string;
         updatedAt: string;
+        threadId?: string | null | undefined;
       };
     };
   };
@@ -775,6 +777,7 @@ export interface StudioToolIO {
         resolved: boolean;
         createdAt: string;
         updatedAt: string;
+        threadId?: string | null | undefined;
       };
     };
   };
