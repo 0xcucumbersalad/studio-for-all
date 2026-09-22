@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Flag01 } from "@untitledui/icons";
+import { LayersThree01 } from "@untitledui/icons";
 import { Button } from "@decocms/ui/components/button.tsx";
 import { Label } from "@decocms/ui/components/label.tsx";
 import {
@@ -12,12 +12,14 @@ import {
   SectionVariantList,
   type SectionVariantEntry,
 } from "../section-variant-list";
+import { AddVariantListButton } from "../page-variant-tabs";
 import {
   extractMatcherGlobals,
   extractMatchers,
   type MatcherEntry,
 } from "../matcher-picker";
 import { formatMatcher } from "../format-matcher";
+import { crumbLabel } from "../schema-form-breadcrumb";
 import {
   buildMatcherBlockData,
   getSavedMatcherBlockKey,
@@ -30,6 +32,8 @@ import {
 import type { LiveMeta } from "../resolve-schema";
 import { VariantRuleEditor } from "../variant-rule-editor";
 import { VariantRenameDialog } from "../variant-rename-dialog";
+import { VariantRuleSection, VariantSelect } from "../sections-editor-panels";
+import { HeaderSlotPortal } from "../header-slot";
 import { ALWAYS_MATCHER_RESOLVE_TYPE } from "../section-types";
 import { cachedResolveSchema } from "./resolved-schema-cache";
 import type { VariantMatcherOps } from "../variant-matcher-rename";
@@ -60,10 +64,18 @@ import {
   wrapAsMultivariate,
   type MultivariateWrapper,
 } from "./media-variants";
+import { EditorRowLink } from "../editor-list-row";
 import type { FieldProps } from "./field-props";
 
 export interface MultivariateFieldWrapperProps extends FieldProps {
   multivariateResolveType: string;
+  /**
+   * Set where this wrapper is one property among many: the field then reads as
+   * a row you open, the way a multivariate section does, instead of stacking a
+   * variant list and a rule on top of its neighbours. The section-level call
+   * site leaves it off — there the wrapper already owns the panel.
+   */
+  asDestination?: boolean;
   /** Render the inner field (used for both plain and variant values). */
   renderInnerField: (props: FieldProps) => ReactNode;
   /**
@@ -77,11 +89,12 @@ export interface MultivariateFieldWrapperProps extends FieldProps {
 export function MultivariateFieldWrapper({
   multivariateResolveType,
   renderInnerField,
+  asDestination,
   onVariantMatcherOp,
   ...props
 }: MultivariateFieldWrapperProps) {
   const t = useT();
-  const { value, onChange, meta, path, decofile } = props;
+  const { value, onChange, meta, path, label, focused, decofile } = props;
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [renameIndex, setRenameIndex] = useState<number | null>(null);
   const [renamePending, setRenamePending] = useState(false);
@@ -105,7 +118,7 @@ export function MultivariateFieldWrapper({
                 setSelectedIndex(0);
               }}
             >
-              <Flag01 size={14} />
+              <LayersThree01 size={14} />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -113,6 +126,25 @@ export function MultivariateFieldWrapper({
           </TooltipContent>
         </Tooltip>
       </div>
+    );
+  }
+
+  // Closed: one row that opens the variants, so a property with variants reads
+  // the same as a section with variants. The crumb is the field's own label —
+  // that is what the breadcrumb resolver matches to narrow back to this field.
+  if (asDestination && !focused) {
+    return (
+      <EditorRowLink
+        icon={
+          <LayersThree01 className="size-4 shrink-0 text-muted-foreground" />
+        }
+        label={t("sectionsEditor.multivariateFieldWrapper.variantsOf", {
+          label,
+        })}
+        onOpen={() =>
+          props.onBreadcrumbChange?.([...(props.breadcrumbPath ?? []), label])
+        }
+      />
     );
   }
 
@@ -236,6 +268,92 @@ export function MultivariateFieldWrapper({
   };
 
   const listKey = `${path}-${wrapper.__resolveType}`;
+
+  /* The manage screen is a crumb, not local state, so back returns to the
+     variant rather than leaving the field — the same trail a section's own
+     "Variants" screen gets. The head is relative: the parent consumed the
+     field's own crumb before handing the path down. */
+  const variantsLabel = t("sectionsEditor.pageVariantTabs.variantsLabel");
+  const relativePath = props.breadcrumbPath ?? [];
+  const managing =
+    relativePath.length > 0 && crumbLabel(relativePath[0]!) === variantsLabel;
+  const openManage = () =>
+    props.onBreadcrumbChange?.([variantsLabel, ...relativePath.slice(1)]);
+  const closeManage = () => props.onBreadcrumbChange?.([]);
+
+  // Same shape as every other level: select in the header, list behind it.
+  if (asDestination && focused) {
+    return (
+      <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)] gap-0">
+        {!managing && (
+          <HeaderSlotPortal>
+            <VariantSelect
+              variants={variantEntries}
+              activeIndex={safeIndex}
+              onSelect={(index) => {
+                setSelectedIndex(index);
+                closeManage();
+              }}
+              onManage={openManage}
+              onRemoveAll={handleFlatten}
+            />
+          </HeaderSlotPortal>
+        )}
+        {managing ? (
+          <>
+            <SectionVariantList
+              listKey={listKey}
+              variants={variantEntries}
+              selectedIndex={safeIndex}
+              onSelect={(index) => {
+                setSelectedIndex(index);
+                closeManage();
+              }}
+              onDuplicate={handleDuplicate}
+              onDelete={handleDelete}
+              onRemoveAll={handleFlatten}
+              onReorder={handleReorder}
+              onAdd={handleAdd}
+            />
+            <VariantRuleSection>
+              <VariantRuleEditor
+                currentRt={currentRt}
+                currentLabel={resolveVariantRuleLabel(
+                  currentRule,
+                  decofile ?? {},
+                  formatMatcher,
+                  meta,
+                )}
+                currentGlobalKey={currentGlobalKey}
+                matchers={matchers}
+                globals={globals}
+                onSelect={handleRuleChange}
+                onSelectGlobal={handleSelectGlobal}
+                schema={ruleSchema}
+                formValue={ruleFormValue}
+                onChange={handleRuleFormChange}
+                formKey={`${safeIndex}:${currentGlobalKey ?? currentRt}`}
+                formWrapperClassName="pt-1"
+                meta={meta}
+                decofile={decofile}
+                onSaveReferencedBlock={props.onSaveReferencedBlock}
+                sandbox={props.sandbox}
+              />
+            </VariantRuleSection>
+            <div className="px-2 pt-3">
+              <AddVariantListButton onAdd={handleAdd} />
+            </div>
+          </>
+        ) : (
+          renderInnerField({
+            ...props,
+            value: currentValue,
+            onChange: handleValueChange,
+          })
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)] gap-0">

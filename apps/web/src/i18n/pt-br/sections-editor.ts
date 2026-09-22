@@ -5,6 +5,9 @@ export const sectionsEditor = {
   "sectionsEditor.addSectionModal.searchPlaceholder": "Pesquisar seções...",
   "sectionsEditor.addSectionModal.title": "Adicionar seção",
   "sectionsEditor.anyOfField.configuration": "Configuração",
+  "sectionsEditor.anyOfField.noSectionsFound": "Nenhuma seção encontrada.",
+  "sectionsEditor.anyOfField.searchSections": "Procurar seções…",
+  "sectionsEditor.anyOfField.browseSections": "Ver todas as seções",
   "sectionsEditor.anyOfField.detach": "Desanexar",
   "sectionsEditor.anyOfField.global": "Global",
   "sectionsEditor.anyOfField.globalBlockSaved": 'Bloco global "{name}" salvo',
@@ -45,6 +48,8 @@ export const sectionsEditor = {
   "sectionsEditor.dynamicOptionsField.useValue": 'Usar "{value}"',
   "sectionsEditor.enumField.selectPlaceholder": "Selecionar...",
   "sectionsEditor.enumField.clearOption": "Nenhum",
+  "sectionsEditor.formatMatcher.fromDate": "De {date}",
+  "sectionsEditor.formatMatcher.untilDate": "Até {date}",
   "sectionsEditor.field.missingRequired": "Falta um campo obrigatório",
   "sectionsEditor.field.missingRequiredTooltip":
     "Campo obrigatório não preenchido.",
@@ -119,6 +124,7 @@ export const sectionsEditor = {
   "sectionsEditor.mediaTransformControls.mutedLabel": "Mudo",
   "sectionsEditor.mediaTransformControls.qualityLabel": "Qualidade",
   "sectionsEditor.multivariateFieldWrapper.addVariant": "Adicionar variante",
+  "sectionsEditor.multivariateFieldWrapper.variantsOf": "Variantes de {label}",
   "sectionsEditor.multivariateFieldWrapper.ruleLabel": "Regra",
   "sectionsEditor.multivariateFieldWrapper.variantN": "Variante {n}",
   "sectionsEditor.pageJsonDialog.close": "Fechar",
@@ -153,6 +159,7 @@ export const sectionsEditor = {
   "sectionsEditor.pageVariantTabs.duplicateAction": "Duplicar",
   "sectionsEditor.pageVariantTabs.renameAction": "Renomear",
   "sectionsEditor.pageVariantTabs.variantsLabel": "Variantes",
+  "sectionsEditor.panelSections.seo": "SEO e metadados",
   "sectionsEditor.richTextColorControl.colorButtonLabel": "Cor do texto",
   "sectionsEditor.richTextColorControl.customLabel": "Personalizada",
   "sectionsEditor.richTextColorControl.defaultLabel": "Padrão",
@@ -196,6 +203,7 @@ export const sectionsEditor = {
     "Ativar renderização assíncrona",
   "sectionsEditor.sectionList.hideSection": "Ocultar seção",
   "sectionsEditor.sectionList.makeReusableMenuItem": "Tornar reutilizável",
+  "sectionsEditor.sectionList.asyncBadge": "Renderização assíncrona",
   "sectionsEditor.sectionList.noSections": "Nenhuma seção nesta página.",
   "sectionsEditor.sectionList.sectionActionsMenu": "Ações de seção",
   "sectionsEditor.sectionList.showSection": "Mostrar seção",
@@ -235,6 +243,9 @@ export const sectionsEditor = {
     "Falha ao salvar bloco global",
   "sectionsEditor.sectionsEditor.globalBlockNotFound":
     "Bloco global não encontrado",
+  "sectionsEditor.sectionsEditor.manageVariants": "Gerenciar variantes…",
+  "sectionsEditor.sectionsEditor.globalSectionSubtitle":
+    "Compartilhada em todo o site",
   "sectionsEditor.sectionsEditor.globalSectionBanner":
     "Esta é uma seção global. As alterações são aplicadas em todos os lugares em que esta seção é usada em seu site.",
   "sectionsEditor.sectionsEditor.globalSectionTooltip":
@@ -263,6 +274,7 @@ export const sectionsEditor = {
   "sectionsEditor.sectionsEditor.variantRule": "Regra de variante",
   "sectionsEditor.sectionsEditor.viewJson": "Ver JSON",
   "sectionsEditor.sectionsEditorPanels.addVariant": "Adicionar variante",
+  "sectionsEditor.sectionsEditorPanels.createVariants": "Criar variantes",
   "sectionsEditor.sectionsEditorPanels.backToRule": "Voltar para regra",
   "sectionsEditor.sectionsEditorPanels.changePathTitle":
     "Alterar o caminho desta página?",
@@ -270,7 +282,9 @@ export const sectionsEditor = {
     'A URL da página muda de "{from}" para "{to}". A URL antiga deixa de funcionar e links de entrada ou SEO podem quebrar.',
   "sectionsEditor.sectionsEditorPanels.changePathCancel": "Cancelar",
   "sectionsEditor.sectionsEditorPanels.changePathConfirm": "Alterar caminho",
+  "sectionsEditor.sectionsEditorPanels.pageNameLabel": "Nome da página",
   "sectionsEditor.sectionsEditorPanels.pageNamePlaceholder": "Nome da página",
+  "sectionsEditor.sectionsEditorPanels.pathLabel": "Caminho da URL",
   "sectionsEditor.sectionsEditorPanels.pathPlaceholder": "/caminho",
   "sectionsEditor.sectionsEditorPanels.variantRuleBreadcrumb":
     "Migalhas da regra de variante",
