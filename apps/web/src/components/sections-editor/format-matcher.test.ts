@@ -70,7 +70,8 @@ describe("formatMatcher", () => {
         start: "2024-01-01T00:00:00Z",
         end: "2024-12-31T23:59:59Z",
       });
-      expect(result).toContain("→");
+      expect(result).toStartWith("From ");
+      expect(result).toContain(" to ");
     });
 
     test("formats start-only date", () => {
@@ -78,7 +79,7 @@ describe("formatMatcher", () => {
         __resolveType: "website/matchers/date.ts",
         start: "2024-06-15T10:00:00Z",
       });
-      expect(result).toContain("From");
+      expect(result).toContain("Starts on");
     });
 
     test("formats end-only date", () => {
@@ -86,7 +87,7 @@ describe("formatMatcher", () => {
         __resolveType: "website/matchers/date.ts",
         end: "2024-12-31T23:59:59Z",
       });
-      expect(result).toContain("Until");
+      expect(result).toContain("Ends on");
     });
 
     /** These use local-time literals (no trailing Z) so the day-boundary check
@@ -98,7 +99,7 @@ describe("formatMatcher", () => {
           start: "2026-07-24T00:00:00",
           end: "2026-08-09T23:59:00",
         }),
-      ).toBe("Jul 24 → Aug 9, 2026");
+      ).toBe("From Jul 24 to Aug 9, 2026");
     });
 
     test("a whole-day window spanning years says both", () => {
@@ -108,7 +109,7 @@ describe("formatMatcher", () => {
           start: "2025-12-20T00:00:00",
           end: "2026-01-05T23:59:00",
         }),
-      ).toBe("Dec 20, 2025 → Jan 5, 2026");
+      ).toBe("From Dec 20, 2025 to Jan 5, 2026");
     });
 
     test("open-ended ranges read through the dictionary", () => {
@@ -117,7 +118,7 @@ describe("formatMatcher", () => {
         __resolveType: "website/matchers/date.ts",
         start: "2026-06-15T10:00:00",
       });
-      expect(from.startsWith("From ")).toBe(true);
+      expect(from.startsWith("Starts on ")).toBe(true);
       expect(from).toContain("Jun 15, 2026");
       expect(from).toContain("10:00 AM");
 
@@ -125,7 +126,7 @@ describe("formatMatcher", () => {
         __resolveType: "website/matchers/date.ts",
         end: "2026-06-15T10:00:00",
       });
-      expect(until.startsWith("Until ")).toBe(true);
+      expect(until.startsWith("Ends on ")).toBe(true);
       expect(until).toContain("Jun 15, 2026");
       expect(until).toContain("10:00 AM");
     });
@@ -393,7 +394,8 @@ describe("formatMatcher", () => {
         start: "2024-01-01T00:00:00Z",
         end: "2024-06-30T00:00:00Z",
       });
-      expect(result).toContain("→");
+      expect(result).toStartWith("From ");
+      expect(result).toContain(" to ");
     });
 
     test("falls back to label for unknown resolveType", () => {
