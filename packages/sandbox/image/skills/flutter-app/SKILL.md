@@ -1,18 +1,32 @@
 ---
 name: flutter-app
-description: Work on a Flutter/Dart repository (one with a pubspec.yaml) in the sandbox — resolve private pub dependencies, run analyze/test, and QA the UI by compiling to web and screenshotting it. Use whenever the repo you are working in is a Flutter app, and especially before reporting that you cannot see or exercise a mobile app's UI.
+description: Work on a Flutter/Dart repository (one with a pubspec.yaml) in the sandbox — resolve private pub dependencies, run analyze/test, and QA the UI on an Android emulator or by compiling to web, and screenshot it. Use whenever the repo you are working in is a Flutter app, and especially before reporting that you cannot see or exercise a mobile app's UI.
 ---
 
 # flutter-app — building and QA'ing an app that is not a website
 
-A Flutter repo breaks two assumptions the rest of the sandbox is built on: its
-pull requests have no deploy `previewUrl`, and there is no emulator here (the
-nodes have no `/dev/kvm`, and nothing is going to change that). So the usual
-"open the preview and look at it" does not apply, and neither does giving up.
+A Flutter repo breaks an assumption the rest of the sandbox is built on: its
+pull requests have no deploy `previewUrl`, so the usual "open the preview and
+look at it" does not apply — and neither does giving up.
 
-What you have instead: the Flutter SDK at `/opt/flutter` (already on `PATH`),
-and the ability to compile the app **to web** and point a real browser at it.
-That is how you look at the UI.
+What you have: the Flutter SDK at `/opt/flutter` (already on `PATH`), and one
+of two ways to look at the UI, depending on the sandbox image.
+
+## First: check which sandbox image you are on
+
+If `qa-android` is on your `PATH` (equivalently, `$STUDIO_SANDBOX_ANDROID_EMULATOR`
+is set), this repo opted into the **Android sandbox image**: there is an Android
+emulator, and you can run the app for real — see [Running the app on the
+emulator](#running-the-app-on-the-emulator-qa-android). Reach for that first;
+it is strictly better than the web build.
+
+Otherwise you are on the default image and the web build below is your only
+way to see a UI. If the web build then fails for a reason you cannot fix (a
+dependency that does not compile to JS — see [When the web build
+fails](#when-the-web-build-fails)), or the app cannot start without native
+plugins (Firebase, push, attribution SDKs), say so in your report **and say
+that the repo can be switched to the Android emulator image in Settings →
+Repositories**. That is the fix; do not spend the run working around it.
 
 ## Check the version pin first
 
@@ -79,7 +93,51 @@ flutter test           # unit + widget tests
 
 Run these before you hand over. They are fast and they are what CI will say.
 
-## Looking at the UI
+## Running the app on the emulator (`qa-android`)
+
+Only on the Android sandbox image. This builds the app's Android target, boots
+a headless emulator, installs the app and launches its real `main()` — native
+plugins included, so Firebase, push and the rest behave as on a phone.
+
+```bash
+qa-android start                 # boot + build + install + launch; first run takes minutes
+qa-android ui                    # what's on screen: "x,y [clickable]<TAB>label" per element
+qa-android shot org/output/qa/01.png
+qa-android tap 640 1480          # an x,y from `ui`, or read off the screenshot
+qa-android type "search term"
+qa-android key ENTER             # BACK, HOME, ENTER, TAB, DEL, ...
+qa-android swipe 360 1200 360 400   # scroll down
+qa-android shot org/output/qa/02.png
+qa-android logs 80               # the app's output — where startup crashes land
+qa-android stop
+```
+
+Then `Read` the PNGs. A screenshot you never opened is not verification.
+
+**Find things with `ui`, then tap them.** It lists every element Android's
+accessibility layer sees — for a Flutter app, its Semantics tree: text,
+button labels, tooltips — with the centre point of each. Tapping a label's
+coordinates beats estimating a position from the picture. Coordinates are
+screen pixels, and the screen is 720x1600, the same as the screenshots, so a
+point read off a PNG works too. An icon-only button with no tooltip or
+semantic label will not appear in `ui`; use the screenshot for those.
+
+**The first `start` is slow** — Gradle downloads its dependencies and compiles
+the app, several minutes for a real one. Later `start`s reuse the booted
+emulator and the Gradle cache. Do not stop and restart to "refresh": `start`
+again rebuilds and relaunches on the running emulator.
+
+**If `start` says `/dev/kvm` is not available**, the sandbox landed on a node
+without KVM. That is an infrastructure problem, not yours — report it.
+
+**What the emulator does not have:** a signed-in Google account, a camera,
+biometrics, or real push delivery. Screens behind those, and flows that need a
+real payment or an SMS code, are the ones to name as not exercised.
+
+## Looking at the UI (web build)
+
+On the default image this is the only option; on the Android image prefer
+`qa-android` above.
 
 ```bash
 flutter build web --release        # ~30s for a small app, minutes for a real one
@@ -175,6 +233,14 @@ than working around:
   catches it: a page that looks right and throws is the failure a screenshot
   alone reports as a pass. Screenshot the screens that do work, and say plainly
   which path you could not exercise.
+- **A DEPENDENCY that cannot compile to JS.** Two signatures: "The integer
+  literal 0x… can't be represented exactly in JavaScript" (dart2js) and
+  "dart:html unsupported" (dart2wasm). Check the file path in the error — if it
+  is under `.pub-cache`, it is a transitive dependency and it is **not yours to
+  fix**. Neither is it worth retrying: `--release`, `--profile`, `--wasm` and
+  `run -d web-server` all go through those same two compilers, so if one fails
+  this way they all do. Stop, and report that the repo needs the Android
+  emulator image (Settings → Repositories), which has no such limit.
 
 If the app genuinely cannot reach web, fall back to the checks above plus
 reading the code end to end — and **say what you could not see**, rather than

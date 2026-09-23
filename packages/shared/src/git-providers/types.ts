@@ -78,6 +78,23 @@ export const GitProviderAccountSchema = z.object({
 });
 export type GitProviderAccount = z.infer<typeof GitProviderAccountSchema>;
 
+/**
+ * Which sandbox image this repository's sandboxes boot from.
+ *
+ * `default` is the image every sandbox uses. Any other value names a variant
+ * SandboxTemplate the cluster renders as `<base>-<value>` (today: `android`,
+ * which adds a Linux desktop toolchain so an agent can run the app itself).
+ *
+ * A shape-validated string rather than a closed enum: the set of variants is
+ * owned by the cluster, not by Studio, so adding one must not need a Studio
+ * deploy. A name the cluster does not render is safe — the sandbox provider
+ * probes the template and degrades to the default one.
+ */
+export const SandboxImageSchema = z
+  .string()
+  .regex(/^[a-z][a-z0-9-]{0,31}$/, "lowercase letters, digits and dashes only");
+export type SandboxImage = z.infer<typeof SandboxImageSchema>;
+
 export const RepositorySchema = z.object({
   id: z.string(),
   organizationId: z.string(),
@@ -95,6 +112,9 @@ export const RepositorySchema = z.object({
   defaultBranch: z.string().nullable(),
   webUrl: z.string(),
   visibility: z.enum(["public", "private", "internal"]).nullable(),
+  sandboxImage: SandboxImageSchema.describe(
+    "Sandbox image this repository's sandboxes boot from.",
+  ),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

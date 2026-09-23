@@ -42,6 +42,13 @@ import { Button } from "@decocms/ui/components/button.tsx";
 import { Alert, AlertDescription } from "@decocms/ui/components/alert.tsx";
 
 import { Skeleton } from "@decocms/ui/components/skeleton.tsx";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@decocms/ui/components/select.tsx";
 
 import { GitProviderIcon } from "@/components/icons/git-provider-icon";
 import { SettingsGroupPage } from "@/components/settings/settings-group-page";
@@ -52,6 +59,7 @@ import {
   type Repository,
   useDeleteGitAccount,
   useDeleteRepository,
+  useUpdateRepository,
   useGitAccounts,
   useGitProviderCapabilities,
   useRepositories,
@@ -249,6 +257,59 @@ function AccountRow({
   );
 }
 
+/**
+ * Which image this repo's sandboxes boot from. Changing it affects the NEXT
+ * sandbox: a running one keeps the image it was claimed with, because a
+ * SandboxClaim names its template once and the pod cannot be re-imaged.
+ */
+function SandboxImageSelect({ repository }: { repository: Repository }) {
+  const t = useT();
+  const update = useUpdateRepository();
+  return (
+    <Select
+      value={repository.sandboxImage}
+      disabled={update.isPending}
+      onValueChange={(value) =>
+        update.mutate(
+          { id: repository.id, sandboxImage: value },
+          {
+            onError: (error) =>
+              toast.error(
+                error instanceof Error
+                  ? error.message
+                  : t("settings.repositories.sandboxImageError"),
+              ),
+          },
+        )
+      }
+    >
+      <SelectTrigger
+        size="sm"
+        className="text-xs w-40"
+        aria-label={t("settings.repositories.sandboxImageLabel")}
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="default" className="text-xs">
+          {t("settings.repositories.sandboxImageDefault")}
+        </SelectItem>
+        <SelectItem value="android" className="text-xs">
+          {t("settings.repositories.sandboxImageAndroid")}
+        </SelectItem>
+        {/* A variant set through REPOSITORY_UPDATE that this list doesn't
+            name still has to show as the current value. */}
+        {repository.sandboxImage !== "default" &&
+          repository.sandboxImage !== "android" && (
+            <SelectItem value={repository.sandboxImage} className="text-xs">
+              {repository.sandboxImage}
+            </SelectItem>
+          )}
+      </SelectContent>
+    </Select>
+  );
+}
+
 function RepositoryRow({
   repository,
   onUnlink,
@@ -291,6 +352,7 @@ function RepositoryRow({
         </div>
       </div>
       <div className="flex items-center gap-2 shrink-0">
+        <SandboxImageSelect repository={repository} />
         <Button variant="ghost" size="sm" asChild>
           <a
             href={repository.webUrl}
