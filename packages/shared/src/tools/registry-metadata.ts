@@ -42,7 +42,8 @@ export type ToolCategory =
   | "VM"
   | "Search"
   | "Task Board"
-  | "Jira";
+  | "Jira"
+  | "Blog";
 
 /**
  * All tool names - keep in sync with CORE_TOOLS in apps/api/src/tools/index.ts
@@ -63,6 +64,12 @@ const ALL_TOOL_NAMES = [
   "BRAND_CONTEXT_UPDATE",
   "BRAND_CONTEXT_DELETE",
   "BRAND_CONTEXT_EXTRACT",
+  "BLOG_BRAND_EXTRACT",
+  "BLOG_PILLAR_SUGGEST",
+  "BLOG_THEME_SUGGEST",
+  "BLOG_FORMAT_SUGGEST",
+  "BLOG_POST_DRAFT",
+  "BLOG_LINK_SUGGEST",
   "BRAND_GET",
   "BRAND_LIST",
   "ORGANIZATION_DOMAIN_LIST",
@@ -395,6 +402,37 @@ export const MANAGEMENT_TOOLS: ToolMetadata[] = [
     name: "BRAND_CONTEXT_EXTRACT",
     description: "Extract brand context from website",
     category: "Organizations",
+  },
+  {
+    name: "BLOG_BRAND_EXTRACT",
+    description:
+      "Infer editorial brand context (tone, dos and don'ts) from a site",
+    category: "Blog",
+  },
+  {
+    name: "BLOG_PILLAR_SUGGEST",
+    description: "Propose content pillars from a brand's editorial context",
+    category: "Blog",
+  },
+  {
+    name: "BLOG_THEME_SUGGEST",
+    description: "Propose blog post ideas from a brand's editorial context",
+    category: "Blog",
+  },
+  {
+    name: "BLOG_FORMAT_SUGGEST",
+    description: "Name the post formats a blog writes in",
+    category: "Blog",
+  },
+  {
+    name: "BLOG_POST_DRAFT",
+    description: "Write a blog post from a theme and a format",
+    category: "Blog",
+  },
+  {
+    name: "BLOG_LINK_SUGGEST",
+    description: "Propose internal links from a post to the site's other posts",
+    category: "Blog",
   },
   {
     name: "BRAND_GET",
@@ -2044,6 +2082,7 @@ export function getToolsByCategory(): Record<ToolCategory, ToolMetadata[]> {
     Search: [],
     "Task Board": [],
     Jira: [],
+    Blog: [],
   };
 
   for (const tool of MANAGEMENT_TOOLS) {

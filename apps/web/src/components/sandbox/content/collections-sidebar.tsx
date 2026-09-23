@@ -11,8 +11,9 @@ import {
   LayoutAlt01,
   Settings01,
   Sliders02,
-  Tag01,
+  Stars02,
   CreditCardSearch,
+  Tag01,
   Users01,
   Zap,
 } from "@untitledui/icons";
@@ -92,6 +93,13 @@ export function CollectionsSidebar({
               <BookOpen01 size={13} className="shrink-0" />
               {t("sandbox.collectionsSidebar.blog")}
             </div>
+            <CollectionRow
+              id="context"
+              icon={Stars02}
+              label={t("sandbox.collectionsSidebar.context")}
+              active={active === "context"}
+              onSelect={onSelect}
+            />
             <CollectionRow
               id="posts"
               icon={File02}

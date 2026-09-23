@@ -1271,6 +1271,159 @@ export interface StudioToolIO {
         | undefined;
     };
   };
+  BLOG_BRAND_EXTRACT: {
+    input: { blocks: { key: string; content: string }[] };
+    output: {
+      companyName: string;
+      description: string;
+      language: string;
+      tone: string;
+      targetAudience: string;
+      values: { name: string; value: string }[];
+      dos: { name: string; value: string }[];
+      avoid: { name: string; value: string }[];
+      categories: string[];
+      competitors: { name: string; value: string }[];
+      sources: string[];
+      searchedCompetitors: boolean;
+    };
+  };
+  BLOG_PILLAR_SUGGEST: {
+    input: {
+      brand: {
+        companyName?: string | undefined;
+        description?: string | undefined;
+        language?: string | undefined;
+        tone?: string | undefined;
+        targetAudience?: string | undefined;
+        values?: { name: string; value: string }[] | undefined;
+        dos?: { name: string; value: string }[] | undefined;
+        avoid?: { name: string; value: string }[] | undefined;
+        categories?: string[] | undefined;
+        competitors?: { name: string; value: string }[] | undefined;
+      };
+      existingPillars?: string[] | undefined;
+      categories?: string[] | undefined;
+      guidance?: string | undefined;
+      count?: number | undefined;
+    };
+    output: { pillars: { title: string; body: string }[] };
+  };
+  BLOG_THEME_SUGGEST: {
+    input: {
+      brand: {
+        companyName?: string | undefined;
+        description?: string | undefined;
+        language?: string | undefined;
+        tone?: string | undefined;
+        targetAudience?: string | undefined;
+        values?: { name: string; value: string }[] | undefined;
+        dos?: { name: string; value: string }[] | undefined;
+        avoid?: { name: string; value: string }[] | undefined;
+        categories?: string[] | undefined;
+        competitors?: { name: string; value: string }[] | undefined;
+      };
+      existingTitles?: string[] | undefined;
+      categories?: string[] | undefined;
+      guidance?: string | undefined;
+      pillar?: { title: string; body: string } | undefined;
+      formats?: string[] | undefined;
+      count?: number | undefined;
+    };
+    output: { themes: { title: string; body: string }[]; searched: boolean };
+  };
+  BLOG_FORMAT_SUGGEST: {
+    input: {
+      brand: {
+        companyName?: string | undefined;
+        description?: string | undefined;
+        language?: string | undefined;
+        tone?: string | undefined;
+        targetAudience?: string | undefined;
+        values?: { name: string; value: string }[] | undefined;
+        dos?: { name: string; value: string }[] | undefined;
+        avoid?: { name: string; value: string }[] | undefined;
+        categories?: string[] | undefined;
+        competitors?: { name: string; value: string }[] | undefined;
+      };
+      sections?:
+        | { name: string; title: string; description?: string | undefined }[]
+        | undefined;
+      postStructures?: { title: string; sections: string[] }[] | undefined;
+      count?: number | undefined;
+    };
+    output: { formats: { name: string; value: string }[] };
+  };
+  BLOG_POST_DRAFT: {
+    input: {
+      brand: {
+        companyName?: string | undefined;
+        description?: string | undefined;
+        language?: string | undefined;
+        tone?: string | undefined;
+        targetAudience?: string | undefined;
+        values?: { name: string; value: string }[] | undefined;
+        dos?: { name: string; value: string }[] | undefined;
+        avoid?: { name: string; value: string }[] | undefined;
+        categories?: string[] | undefined;
+        competitors?: { name: string; value: string }[] | undefined;
+      };
+      theme: { title: string; body: string };
+      format: { name: string; value: string };
+      sections: {
+        type:
+          | "Heading"
+          | "Paragraph"
+          | "List"
+          | "Quote"
+          | "Callout"
+          | "Cta"
+          | "Divider";
+        purpose?: string | undefined;
+      }[];
+      pillar?: { title: string; body: string } | undefined;
+      categories?: { name: string; slug: string }[] | undefined;
+      authors?:
+        | { name: string; email: string; bio?: string | undefined }[]
+        | undefined;
+      extraInstructions?: string | undefined;
+    };
+    output: {
+      title: string;
+      excerpt: string;
+      seo: { title: string; description: string };
+      categorySlugs: string[];
+      authorEmails: string[];
+      sections: {
+        type:
+          | "Heading"
+          | "Paragraph"
+          | "List"
+          | "Quote"
+          | "Callout"
+          | "Cta"
+          | "Divider";
+        text?: string | undefined;
+        level?: "1" | "2" | "3" | undefined;
+        html?: string | undefined;
+        items?: string[] | undefined;
+        style?: "ordered" | "unordered" | undefined;
+        quote?: string | undefined;
+        title?: string | undefined;
+        body?: string | undefined;
+        variant?: "info" | "tip" | "warning" | "product" | undefined;
+        href?: string | undefined;
+      }[];
+    };
+  };
+  BLOG_LINK_SUGGEST: {
+    input: {
+      body: string;
+      posts: { title: string; slug: string }[];
+      count?: number | undefined;
+    };
+    output: { suggestions: { quote: string; slug: string }[] };
+  };
   BRAND_GET: {
     input: { id?: string | undefined };
     output: {

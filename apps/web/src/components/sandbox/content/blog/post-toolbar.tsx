@@ -1,9 +1,9 @@
 import { forwardRef } from "react";
 import {
+  Archive,
   ChevronDown,
   FilterFunnel01,
   SwitchVertical01,
-  Trash01,
   X,
 } from "@untitledui/icons";
 import { Button } from "@decocms/ui/components/button.tsx";
@@ -24,7 +24,13 @@ import {
 import { cn } from "@decocms/ui/lib/utils.ts";
 import { useT } from "@/i18n/use-t.ts";
 import type { TranslationKey } from "@/i18n/use-t.ts";
-import type { PostSort, PostStatusFilter } from "./content-browser";
+import { POST_STATUSES, type PostStatus } from "./blog-data";
+import { POST_STATUS_LABEL } from "./use-post-status-move";
+
+/** How the list is ordered. */
+export type PostSort = "date-desc" | "date-asc" | "az" | "za";
+/** Filtering by status is filtering by the lane a post sits in. */
+export type PostStatusFilter = PostStatus;
 
 // Sentinel for the "no filter" radio option (Radix forbids empty values).
 const ALL_FILTER = "__all__";
@@ -44,24 +50,18 @@ const POST_SORT_SHORT_KEYS: Record<PostSort, TranslationKey> = {
   za: "sandbox.postToolbar.sortZA",
 };
 
-const POST_STATUS_LABEL_KEYS: Record<PostStatusFilter, TranslationKey> = {
-  published: "sandbox.postToolbar.statusPublished",
-  scheduled: "sandbox.postToolbar.statusScheduled",
-  draft: "sandbox.postToolbar.statusDraft",
-};
-
 const STATUS_PREFIX = "status:";
 
 /** The status a `status:<name>` menu value selects, or null if it isn't one. */
 function statusFromValue(value: string): PostStatusFilter | null {
   if (!value.startsWith(STATUS_PREFIX)) return null;
-  const status = value.slice(STATUS_PREFIX.length);
-  return status in POST_STATUS_LABEL_KEYS ? (status as PostStatusFilter) : null;
+  const status = value.slice(STATUS_PREFIX.length) as PostStatus;
+  return POST_STATUSES.includes(status) ? status : null;
 }
 
 type CategoryOption = { slug: string; name: string; count: number };
 type AuthorOption = { email: string; name: string; count: number };
-type StatusCounts = Record<PostStatusFilter, number>;
+type StatusCounts = Partial<Record<PostStatusFilter, number>>;
 
 /**
  * Compact, icon-led filter trigger: just the icon when no filter is applied,
@@ -140,7 +140,7 @@ export function PostFilterBar({
     activeCategory?.name ??
     activeAuthor?.name ??
     (statusFilter
-      ? t(POST_STATUS_LABEL_KEYS[statusFilter])
+      ? t(POST_STATUS_LABEL[statusFilter])
       : t("sandbox.postToolbar.filterLabel"));
   // One filter at a time: encode every dimension into a single radio value.
   const activeValue = categoryFilter
@@ -201,19 +201,17 @@ export function PostFilterBar({
             <DropdownMenuLabel className="text-muted-foreground/70">
               {t("sandbox.postToolbar.statusLabel")}
             </DropdownMenuLabel>
-            {(Object.keys(POST_STATUS_LABEL_KEYS) as PostStatusFilter[]).map(
-              (status) => (
-                <DropdownMenuRadioItem
-                  key={`status:${status}`}
-                  value={`status:${status}`}
-                >
-                  <span className="min-w-0 flex-1 truncate">
-                    {t(POST_STATUS_LABEL_KEYS[status])}
-                  </span>
-                  <OptionCount count={statusCounts[status]} />
-                </DropdownMenuRadioItem>
-              ),
-            )}
+            {POST_STATUSES.map((status) => (
+              <DropdownMenuRadioItem
+                key={`status:${status}`}
+                value={`status:${status}`}
+              >
+                <span className="min-w-0 flex-1 truncate">
+                  {t(POST_STATUS_LABEL[status])}
+                </span>
+                <OptionCount count={statusCounts[status] ?? 0} />
+              </DropdownMenuRadioItem>
+            ))}
             {categories.length > 0 && (
               <DropdownMenuLabel className="text-muted-foreground/70">
                 {t("sandbox.postToolbar.categoryLabel")}
@@ -347,13 +345,14 @@ export function PostSelectionToolbar({
   count,
   allSelected,
   onToggleSelectAll,
-  onDelete,
+  onArchive,
   onExit,
 }: {
   count: number;
   allSelected: boolean;
   onToggleSelectAll: () => void;
-  onDelete: () => void;
+  /** Archives rather than deletes: reversible, and what removing one post does. */
+  onArchive: () => void;
   onExit: () => void;
 }) {
   const t = useT();
@@ -370,16 +369,16 @@ export function PostSelectionToolbar({
               type="button"
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-destructive hover:text-destructive"
+              className="h-7 w-7"
               disabled={count === 0}
-              onClick={onDelete}
-              aria-label={t("sandbox.postToolbar.deleteSelectedPosts")}
+              onClick={onArchive}
+              aria-label={t("sandbox.postToolbar.archiveSelectedPosts")}
             >
-              <Trash01 size={14} />
+              <Archive size={14} />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom">
-            {t("sandbox.postToolbar.deleteSelected")}
+            {t("sandbox.postToolbar.archiveSelected")}
           </TooltipContent>
         </Tooltip>
         <Tooltip>

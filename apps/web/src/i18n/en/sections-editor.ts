@@ -176,6 +176,7 @@ export const sectionsEditor = {
   "sectionsEditor.richTextLinkControl.applyLinkLabel": "Apply link",
   "sectionsEditor.richTextLinkControl.linkButtonLabel": "Link",
   "sectionsEditor.richTextLinkControl.newTabLabel": "New tab",
+  "sectionsEditor.richTextLinkControl.tabUrl": "URL",
   "sectionsEditor.richTextLinkControl.removeLinkLabel": "Remove link",
   "sectionsEditor.richTextLinkControl.sameTabLabel": "Same tab",
   "sectionsEditor.richTextLinkControl.urlInputAriaLabel": "Link URL",
