@@ -15,6 +15,10 @@ import {
   pollInteraction,
   submitInteraction,
 } from "./gemini-interactions";
+import {
+  createStallTimeoutFetch,
+  stallTimeoutMsFromEnv,
+} from "./stall-timeout-fetch";
 import type { DecopilotSecretModelSource } from "../types";
 import type { StudioProvider } from "./studio-provider";
 
@@ -54,6 +58,15 @@ function withProviderSurface(
 function openaiCompatibleStreamsReasoning(): boolean {
   const value = process.env.OPENAI_COMPATIBLE_STREAMS_REASONING?.trim();
   return !value || value === "true" || value === "1";
+}
+
+/** OPENAI_COMPATIBLE_STALL_TIMEOUT_MS (default 120000, `0` = off), read like
+ *  the flag above. */
+function openaiCompatibleFetch(): { fetch?: typeof fetch } {
+  const timeoutMs = stallTimeoutMsFromEnv(
+    process.env.OPENAI_COMPATIBLE_STALL_TIMEOUT_MS,
+  );
+  return timeoutMs > 0 ? { fetch: createStallTimeoutFetch(timeoutMs) } : {};
 }
 
 export function createProviderFromSecret(
@@ -138,11 +151,13 @@ export function createProviderFromSecret(
       if (normalizedBaseUrl && !normalizedBaseUrl.endsWith("/v1")) {
         normalizedBaseUrl += "/v1";
       }
+      const stallFetch = openaiCompatibleFetch();
       const openai = createOpenAI({
         apiKey: apiKey || "not-needed",
         name: providerId,
         ...(normalizedBaseUrl ? { baseURL: normalizedBaseUrl } : {}),
         ...(extraHeaders ? { headers: extraHeaders } : {}),
+        ...stallFetch,
       });
       // Chat goes through `@ai-sdk/openai-compatible`: `@ai-sdk/openai`'s chat
       // model never reads `reasoning_content`, so a thinking model behind
@@ -154,6 +169,7 @@ export function createProviderFromSecret(
             baseURL: normalizedBaseUrl || "https://api.openai.com/v1",
             apiKey: apiKey || "not-needed",
             ...(extraHeaders ? { headers: extraHeaders } : {}),
+            ...stallFetch,
             // Token usage on the final chunk — what the OpenAI client sent too.
             includeUsage: true,
           }).chatModel

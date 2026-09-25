@@ -30,7 +30,13 @@ export interface NativeAgentLoopCoreHandle {
 }
 
 function stringifyProviderError(error: unknown): string {
-  if (error instanceof Error) return error.message;
+  if (error instanceof Error) {
+    // The AI SDK wraps a mid-body stream failure; the reason is only on `cause`.
+    const cause = error.cause;
+    return cause instanceof Error && !error.message.includes(cause.message)
+      ? `${error.message}: ${cause.message}`
+      : error.message;
+  }
   if (typeof error === "string") return error;
   // Provider/gateway errors often arrive as plain objects (e.g. the
   // `{ code, message, metadata }` shape a 504 idle timeout carries). Prefer a

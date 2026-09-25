@@ -64,6 +64,8 @@ const TRANSIENT_ERROR_PATTERNS: RegExp[] = [
   /too many clients already|timeout exceeded when trying to connect/i,
   // Upstream rate limit / capacity, from the model gateway or GitHub.
   /\b(?:429|503)\b|too many requests|service unavailable/i,
+  // The model gateway went silent (`ProviderStallError`).
+  /llm provider stalled/i,
 ];
 
 /**

@@ -44,4 +44,36 @@ describe("runNativeAgentLoopCore", () => {
     expect(capturedConfig?.maxOutputTokens).toBe(1234);
     await expect(handle.error).resolves.toContain("provider exploded");
   });
+
+  // The AI SDK wraps a mid-stream body failure; the reason is only on `cause`.
+  it("keeps a wrapped provider error's cause in the message", async () => {
+    const handle = runNativeAgentLoopCore({
+      model: { specificationVersion: "v2" } as never,
+      systemMessages: [],
+      messages: [],
+      tools: {},
+      maxOutputTokens: 1,
+      stopWhen: () => false,
+      abortSignal: new AbortController().signal,
+      streamText: (config) => {
+        const onError = (
+          config as { onError: (event: { error: unknown }) => unknown }
+        ).onError;
+        Promise.resolve().then(() =>
+          onError({
+            error: new Error("Failed to process successful response", {
+              cause: new Error(
+                "LLM provider stalled: stream sent no data for 120s",
+              ),
+            }),
+          }),
+        );
+        return { finishReason: Promise.resolve("error") } as never;
+      },
+    });
+
+    await expect(handle.error).resolves.toBe(
+      "Failed to process successful response: LLM provider stalled: stream sent no data for 120s",
+    );
+  });
 });

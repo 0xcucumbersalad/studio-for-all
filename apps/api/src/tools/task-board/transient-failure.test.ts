@@ -54,6 +54,16 @@ describe("isTransientRunFailure", () => {
     }
   });
 
+  // LiteLLM held requests without answering while a board burst ran.
+  test("a model gateway that went silent is infrastructure", () => {
+    for (const errorText of [
+      "Failed to process successful response: LLM provider stalled: stream sent no data for 120s",
+      "Failed after 3 attempts. Last error: Cannot connect to API: LLM provider stalled: no response within 120s",
+    ]) {
+      expect(isTransientRunFailure({ kind: "error", errorText })).toBe(true);
+    }
+  });
+
   test("kinds that are infrastructure by construction need no message", () => {
     for (const kind of ["stall", "liveness", "projection", "abandoned"]) {
       expect(isTransientRunFailure({ kind })).toBe(true);
