@@ -18,7 +18,9 @@
  * falls back to Decopilot.
  */
 
+import { resolveTier } from "@/core/resolve-tier";
 import type { StudioContext } from "@/core/studio-context";
+import { claudeCodeSupportsProvider } from "@/harnesses/claude-code-env";
 import {
   listOrgRepoChoices,
   type RepoChoice,
@@ -176,11 +178,21 @@ export async function resolveTaskRepoChoice(
   ctx: StudioContext,
   organizationId: string,
   preferred?: PreferredTaskRepo,
+  opts?: { userId?: string | null },
 ): Promise<TaskRepoChoice> {
   if (!agentSandboxEnabled()) {
     console.warn(
       `[task-board] claude-code skipped for org ${organizationId}: ` +
         `hosted sandbox unavailable — running Decopilot`,
+    );
+    return null;
+  }
+  const provider = await claudeCodeBlockingProvider(ctx, opts?.userId);
+  if (provider) {
+    console.warn(
+      `[task-board] claude-code skipped for org ${organizationId}: ` +
+        `model provider "${provider}" cannot drive the Claude Code CLI — ` +
+        `running Decopilot`,
     );
     return null;
   }
@@ -204,6 +216,48 @@ export async function resolveTaskRepoChoice(
     };
   } catch (err) {
     console.warn("[task-board] repo lookup for claude-code failed", err);
+    return null;
+  }
+}
+
+/**
+ * The provider that keeps this run off claude-code, or `null` when it can run
+ * there.
+ *
+ * A task run takes the org's "smart" tier (`enqueueAgentRunForTask`), and the
+ * claude-code harness can only turn an Anthropic-speaking credential into its
+ * environment (`claudeCodeEnvFromCredential`). Choosing claude-code for an org
+ * on any other provider (openai-compatible, google, llmapi) dispatched a run
+ * that failed at once with `UnsupportedClaudeCodeProviderError` — every board
+ * task, every time. Decopilot runs on every provider, so those orgs go there.
+ *
+ * A dispatching user with a linked Claude plan runs on that plan whatever the
+ * org's tier says (dispatch prefers it), so they keep claude-code.
+ *
+ * Fails toward claude-code on a lookup error: that is the behavior before this
+ * check existed, and an unreadable tier fails the Decopilot path too.
+ */
+export async function claudeCodeBlockingProvider(
+  ctx: StudioContext,
+  userId: string | null | undefined,
+): Promise<string | null> {
+  try {
+    if (userId) {
+      const token = await ctx.storage.claudeSubscriptions
+        .findLiveToken(userId)
+        .catch(() => null);
+      if (token) return null;
+    }
+    const orgId = ctx.organization?.id;
+    if (!orgId) return null;
+    const model = await resolveTier(ctx, "smart");
+    const key = await ctx.storage.aiProviderKeys.findById(
+      model.credentialId,
+      orgId,
+    );
+    return claudeCodeSupportsProvider(key.providerId) ? null : key.providerId;
+  } catch (err) {
+    console.warn("[task-board] model provider lookup for claude-code failed", err);
     return null;
   }
 }

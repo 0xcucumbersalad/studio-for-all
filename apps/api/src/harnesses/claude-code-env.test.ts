@@ -3,6 +3,7 @@ import {
   CLAUDE_CODE_MAX_OUTPUT_TOKENS,
   CLAUDE_SUBSCRIPTION_PROVIDER_ID,
   claudeCodeEnvFromCredential,
+  claudeCodeSupportsProvider,
   modelClassFromMetadata,
   UnsupportedClaudeCodeProviderError,
 } from "./claude-code-env";
@@ -282,6 +283,31 @@ describe("tool search", () => {
             .ENABLE_TOOL_SEARCH,
         ).not.toBeNull();
       }
+    }
+  });
+});
+
+describe("claudeCodeSupportsProvider", () => {
+  test("accepts exactly the shapes the env builder accepts", () => {
+    for (const providerId of [
+      "anthropic",
+      CLAUDE_SUBSCRIPTION_PROVIDER_ID,
+      "openrouter",
+      "deco",
+    ]) {
+      expect(claudeCodeSupportsProvider(providerId)).toBe(true);
+      expect(() =>
+        claudeCodeEnvFromCredential({ providerId, apiKey: "k" }),
+      ).not.toThrow();
+    }
+  });
+
+  test("rejects providers the CLI cannot speak to", () => {
+    for (const providerId of ["openai-compatible", "google", "llmapi"]) {
+      expect(claudeCodeSupportsProvider(providerId)).toBe(false);
+      expect(() =>
+        claudeCodeEnvFromCredential({ providerId, apiKey: "k" }),
+      ).toThrow(UnsupportedClaudeCodeProviderError);
     }
   });
 });

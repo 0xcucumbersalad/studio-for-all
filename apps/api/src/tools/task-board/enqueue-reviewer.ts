@@ -736,11 +736,14 @@ async function enqueueReviewerForTask(
   // (the previous default) both came back `not_found` from `enable_tool`, so a
   // reviewer could reach its verdict and never record it. Falls back to
   // Decopilot when the org has no importable repo, exactly as the Super Agent
-  // does — with no repo there is no checkout to review anyway.
-  const choice = await resolveTaskRepoChoice(ctx, organizationId, {
-    repositoryId: task.repositoryId,
-    repo: task.repo,
-  });
+  // does — with no repo there is no checkout to review anyway — and when the
+  // org's model provider cannot drive the Claude Code CLI.
+  const choice = await resolveTaskRepoChoice(
+    ctx,
+    organizationId,
+    { repositoryId: task.repositoryId, repo: task.repo },
+    { userId: task.assignedBy ?? task.createdBy },
+  );
   const repo = choice && "repo" in choice ? choice.repo : null;
   const sandboxed = choice !== null;
   const priorReviewAt = priorCycleReviewAt(task, kind, cycleAt.getTime());
