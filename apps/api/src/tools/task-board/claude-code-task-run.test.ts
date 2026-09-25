@@ -1,7 +1,9 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, mock, test } from "bun:test";
+import type { StudioContext } from "@/core/studio-context";
 import type { RepoChoice } from "@/git-providers/repo-choices";
 import {
   buildClaudeCodeTaskPrompt,
+  claudeCodeBlockingProvider,
   narrowToPreferredRepo,
   pickSoleTaskRepo,
   type TaskRepo,
@@ -558,5 +560,76 @@ describe("the prompt speaks each checkout's own provider", () => {
       );
       expect(prompt).toContain("`glab` inside a GitLab one");
     }
+  });
+});
+
+describe("claudeCodeBlockingProvider", () => {
+  /** An org whose "smart" tier points at one key of `providerId`. */
+  function ctxFor(
+    providerId: string,
+    opts?: { subscriptionToken?: string | null; keyLookupThrows?: boolean },
+  ): StudioContext {
+    const key = {
+      id: "k1",
+      providerId,
+      label: "",
+      presetId: null,
+      createdBy: "u",
+      createdAt: "2026-01-01",
+    };
+    return {
+      organization: { id: "org_1" },
+      auth: { user: { id: "user_1" } },
+      storage: {
+        organizationSettings: {
+          get: mock(() =>
+            Promise.resolve({
+              simple_mode: { tiers: { smart: { keyId: "k1", modelId: "m" } } },
+            }),
+          ),
+        },
+        userModelPreferences: { get: mock(() => Promise.resolve(null)) },
+        aiProviderKeys: {
+          list: mock(() => Promise.resolve([key])),
+          findById: mock(() =>
+            opts?.keyLookupThrows
+              ? Promise.reject(new Error("boom"))
+              : Promise.resolve(key),
+          ),
+        },
+        claudeSubscriptions: {
+          findLiveToken: mock(() =>
+            Promise.resolve(opts?.subscriptionToken ?? null),
+          ),
+        },
+      },
+      aiProviders: { listModels: mock(() => Promise.resolve([])) },
+    } as unknown as StudioContext;
+  }
+
+  test("an Anthropic-speaking provider keeps claude-code", async () => {
+    for (const providerId of ["anthropic", "openrouter", "deco"]) {
+      expect(
+        await claudeCodeBlockingProvider(ctxFor(providerId), "user_1"),
+      ).toBeNull();
+    }
+  });
+
+  test("any other provider is named, so the run goes to Decopilot", async () => {
+    for (const providerId of ["openai-compatible", "google", "llmapi"]) {
+      expect(
+        await claudeCodeBlockingProvider(ctxFor(providerId), "user_1"),
+      ).toBe(providerId);
+    }
+  });
+
+  test("a linked Claude plan keeps claude-code whatever the tier says", async () => {
+    const ctx = ctxFor("openai-compatible", { subscriptionToken: "oauth" });
+    expect(await claudeCodeBlockingProvider(ctx, "user_1")).toBeNull();
+  });
+
+  test("a failed lookup keeps the previous behavior", async () => {
+    const ctx = ctxFor("openai-compatible", { keyLookupThrows: true });
+    expect(await claudeCodeBlockingProvider(ctx, "user_1")).toBeNull();
   });
 });

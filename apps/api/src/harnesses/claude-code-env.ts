@@ -159,6 +159,29 @@ export interface ClaudeCodeCredential {
   baseUrl?: string;
 }
 
+/**
+ * Providers `claudeCodeEnvFromCredential` can turn into an environment. The
+ * CLI speaks only the Anthropic Messages API, so this is the list of
+ * credentials that reach one: Anthropic itself, a linked Claude plan, and
+ * OpenRouter's Anthropic skin (which `deco` keys use too).
+ */
+const CLAUDE_CODE_PROVIDER_IDS: ReadonlySet<string> = new Set([
+  "anthropic",
+  CLAUDE_SUBSCRIPTION_PROVIDER_ID,
+  "openrouter",
+  "deco",
+]);
+
+/**
+ * Whether a run on this provider can use the claude-code harness. Callers that
+ * choose a harness check this first and pick Decopilot otherwise, so an org on
+ * any other provider (openai-compatible, google, llmapi) still gets its runs
+ * instead of the refusal below. Pure — unit-tested.
+ */
+export function claudeCodeSupportsProvider(providerId: string): boolean {
+  return CLAUDE_CODE_PROVIDER_IDS.has(providerId);
+}
+
 export class UnsupportedClaudeCodeProviderError extends Error {
   constructor(providerId: string) {
     super(
