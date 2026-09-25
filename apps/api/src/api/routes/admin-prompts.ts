@@ -20,7 +20,9 @@ import {
   repoWebUrl,
 } from "@decocms/shared/git-providers";
 import { Hono } from "hono";
+import { sql } from "kysely";
 import type { Env } from "@/api/hono-env";
+import { getSettings } from "@/settings";
 import {
   contentClientForProjectRepo,
   requireBranchHead,
@@ -31,12 +33,14 @@ import {
   replacePromptRegion,
 } from "./admin-prompt-region";
 
-/** The repo the prompts live in — this one. */
-const PROMPT_REPO = { owner: "decocms", repo: "studio" } as const;
-const PROMPT_REPO_REF = repoRefFromOwnerName(
-  PROMPT_REPO.owner,
-  PROMPT_REPO.repo,
-);
+/**
+ * The repo the prompts live in — this codebase: `decocms/studio`, or a fork's
+ * own repository when `STUDIO_PROMPT_REPO` points there.
+ */
+function promptRepo() {
+  const { owner, repo } = getSettings().adminPromptRepo;
+  return { owner, repo, ref: repoRefFromOwnerName(owner, repo) };
+}
 
 /**
  * The editable prompts, each addressed by the marker pair that fences it in its
@@ -81,54 +85,89 @@ export class PromptEditorError extends Error {
 type Ctx = Env["Variables"]["studioContext"];
 
 /**
- * The acting admin's organization to borrow a GitHub connection from.
+ * The acting admin's organization to borrow a GitHub credential from.
  *
  * `ctx.organization` is NOT usable here: this surface is instance-level, so
  * there is no org slug in the path for `resolveOrgFromPath` to read, and a
  * browser session's `activeOrganizationId` is frequently null (it is on every
- * local-mode session). So resolve it from the admin's own memberships instead,
- * picking the oldest org that actually has an active GitHub connection.
+ * local-mode session). So resolve it from the admin's own memberships instead.
  *
- * Deterministic rather than chosen: an admin in several connected orgs gets the
- * same one every time, and the response names it so the page can show whose
- * GitHub is about to author the PR. A picker can come when someone needs one.
+ * Two kinds of credential count, in this order:
+ * 1. The prompt repo linked in Settings → Repositories through an active git
+ *    provider account (the GitHub App) — the org that can certainly read it.
+ * 2. A legacy `mcp-github` connection, which is all this used to accept — so
+ *    an admin who had connected GitHub only through the App was told none of
+ *    their organizations had GitHub connected.
+ *
+ * Deterministic rather than chosen: oldest org first within each kind, and the
+ * response names it so the page can show whose GitHub authors the PR.
  */
 async function resolveActorOrg(
   ctx: Ctx,
+  repo: { owner: string; repo: string; ref: { host: string; path: string } },
 ): Promise<{ id: string; slug: string; name: string }> {
   const userId = ctx.auth.user?.id;
   if (!userId) {
     throw new PromptEditorError("Unauthorized", 400);
   }
-  const row = await ctx.db
+  const memberOrgs = ctx.db
     .selectFrom("member")
     .innerJoin("organization", "organization.id", "member.organizationId")
-    .innerJoin("connections", "connections.organization_id", "organization.id")
     .select([
       "organization.id as id",
       "organization.slug as slug",
       "organization.name as name",
     ])
     .where("member.userId", "=", userId)
+    .orderBy("organization.createdAt", "asc")
+    .limit(1);
+
+  const linked = await memberOrgs
+    .where((eb) =>
+      eb.exists(
+        eb
+          .selectFrom("repositories")
+          .innerJoin(
+            "git_provider_accounts",
+            "git_provider_accounts.id",
+            "repositories.account_id",
+          )
+          .select("repositories.id")
+          .whereRef("repositories.organization_id", "=", "organization.id")
+          .where("repositories.host", "=", repo.ref.host.toLowerCase())
+          .where(
+            sql`lower(repositories.path)`,
+            "=",
+            repo.ref.path.toLowerCase(),
+          )
+          .where("git_provider_accounts.status", "=", "active"),
+      ),
+    )
+    .executeTakeFirst();
+  if (linked) return linked;
+
+  const legacy = await memberOrgs
+    .innerJoin("connections", "connections.organization_id", "organization.id")
     .where("connections.slug", "=", "mcp-github")
     .where("connections.status", "=", "active")
-    .orderBy("organization.createdAt", "asc")
-    .limit(1)
     .executeTakeFirst();
-  if (!row) {
-    throw new PromptEditorError(
-      "None of your organizations has GitHub connected — connect it, then reload",
-      400,
-    );
-  }
-  return row;
+  if (legacy) return legacy;
+
+  throw new PromptEditorError(
+    `None of your organizations can reach ${repo.owner}/${repo.repo} on GitHub — ` +
+      "link it in Settings → Repositories (install the GitHub App on it first), then reload",
+    400,
+  );
 }
 
 /** A GitHub client on the acting admin's own connection. */
-async function clientForActor(
-  ctx: Ctx,
-): Promise<{ gh: RepoContentClient; org: { slug: string; name: string } }> {
-  const org = await resolveActorOrg(ctx);
+async function clientForActor(ctx: Ctx): Promise<{
+  gh: RepoContentClient;
+  org: { slug: string; name: string };
+  repo: ReturnType<typeof promptRepo>;
+}> {
+  const repo = promptRepo();
+  const org = await resolveActorOrg(ctx, repo);
   // The mint path for a repo-scoped child connection reads `ctx.organization`,
   // which is exactly what this route doesn't have — bind the resolved org so
   // both the lookup and the token agree on one scope.
@@ -139,9 +178,9 @@ async function clientForActor(
    * its legacy `mcp-github` connection.
    */
   const gh = await contentClientForProjectRepo(orgCtx, org.id, {
-    url: repoWebUrl(PROMPT_REPO_REF),
-    owner: PROMPT_REPO.owner,
-    name: PROMPT_REPO.repo,
+    url: repoWebUrl(repo.ref),
+    owner: repo.owner,
+    name: repo.repo,
   }).catch((cause: unknown) => {
     throw new PromptEditorError(
       cause instanceof Error
@@ -150,7 +189,7 @@ async function clientForActor(
       400,
     );
   });
-  return { gh, org: { slug: org.slug, name: org.name } };
+  return { gh, org: { slug: org.slug, name: org.name }, repo };
 }
 
 /**
@@ -206,7 +245,7 @@ export function createAdminPromptRoutes(): Hono<Env> {
   const app = new Hono<Env>();
 
   app.get("/prompts", async (c) => {
-    const { gh, org } = await clientForActor(c.get("studioContext"));
+    const { gh, org, repo } = await clientForActor(c.get("studioContext"));
     const branch = await gh.getDefaultBranch();
     // Pin the read to the commit, not the branch: the sha goes back to the
     // client and is what a save is written against, so a push landing between
@@ -215,7 +254,7 @@ export function createAdminPromptRoutes(): Hono<Env> {
     const sources = await readSources(gh, baseSha);
 
     return c.json({
-      repo: `${PROMPT_REPO.owner}/${PROMPT_REPO.repo}`,
+      repo: `${repo.owner}/${repo.repo}`,
       branch,
       baseSha,
       // Whose GitHub connection will author the PR — the page shows it, since

@@ -68,6 +68,14 @@ export function describeEncryptionKeyForLog(ek: string): string {
   return `[settings] ENCRYPTION_KEY is set (${masked}, ${ek.length} chars)`;
 }
 
+/** `owner/name` → parts, or null for anything that isn't exactly that. */
+function parseOwnerRepo(
+  value: string | undefined,
+): { owner: string; repo: string } | null {
+  const match = value?.trim().match(/^([\w.-]+)\/([\w.-]+)$/);
+  return match ? { owner: match[1]!, repo: match[2]! } : null;
+}
+
 function toBool(value: string | undefined): boolean {
   return value === "true" || value === "1";
 }
@@ -268,6 +276,10 @@ export function resolveConfig(
       .split(",")
       .map((s) => s.trim().toLowerCase())
       .filter(Boolean),
+    adminPromptRepo: parseOwnerRepo(envVars.STUDIO_PROMPT_REPO) ?? {
+      owner: "decocms",
+      repo: "studio",
+    },
     deploymentAdminFirstUser:
       envVars.DEPLOYMENT_ADMIN_FIRST_USER?.trim().toLowerCase() !== "false",
     taskBoardAdminOrgIds: (envVars.STUDIO_ADMIN_ORG_IDS ?? "")

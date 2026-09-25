@@ -228,6 +228,36 @@ describe("resolveConfig deployment admin first user", () => {
   });
 });
 
+describe("resolveConfig admin prompt repo", () => {
+  it("defaults to decocms/studio", () => {
+    expect(resolveConfig(flags, {}).settings.adminPromptRepo).toEqual({
+      owner: "decocms",
+      repo: "studio",
+    });
+  });
+
+  it("reads a fork's owner/name", () => {
+    expect(
+      resolveConfig(flags, { STUDIO_PROMPT_REPO: " acme/studio-fork " })
+        .settings.adminPromptRepo,
+    ).toEqual({ owner: "acme", repo: "studio-fork" });
+  });
+
+  it("ignores anything that isn't exactly owner/name", () => {
+    for (const value of [
+      "acme",
+      "acme/a/b",
+      "https://github.com/a/b",
+      "a b/c",
+    ]) {
+      expect(
+        resolveConfig(flags, { STUDIO_PROMPT_REPO: value }).settings
+          .adminPromptRepo,
+      ).toEqual({ owner: "decocms", repo: "studio" });
+    }
+  });
+});
+
 describe("resolveConfig task board admin orgs", () => {
   it("defaults to an empty list — deployed is not enabled", () => {
     const result = resolveConfig(flags, {});
