@@ -212,6 +212,22 @@ describe("resolveConfig deployment admin emails", () => {
   });
 });
 
+describe("resolveConfig deployment admin first user", () => {
+  it("is on unless explicitly false", () => {
+    expect(resolveConfig(flags, {}).settings.deploymentAdminFirstUser).toBe(
+      true,
+    );
+    expect(
+      resolveConfig(flags, { DEPLOYMENT_ADMIN_FIRST_USER: " FALSE " }).settings
+        .deploymentAdminFirstUser,
+    ).toBe(false);
+    expect(
+      resolveConfig(flags, { DEPLOYMENT_ADMIN_FIRST_USER: "true" }).settings
+        .deploymentAdminFirstUser,
+    ).toBe(true);
+  });
+});
+
 describe("resolveConfig task board admin orgs", () => {
   it("defaults to an empty list — deployed is not enabled", () => {
     const result = resolveConfig(flags, {});

@@ -268,6 +268,8 @@ export function resolveConfig(
       .split(",")
       .map((s) => s.trim().toLowerCase())
       .filter(Boolean),
+    deploymentAdminFirstUser:
+      envVars.DEPLOYMENT_ADMIN_FIRST_USER?.trim().toLowerCase() !== "false",
     taskBoardAdminOrgIds: (envVars.STUDIO_ADMIN_ORG_IDS ?? "")
       .split(",")
       .map((s) => s.trim())

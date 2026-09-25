@@ -40,6 +40,10 @@ export interface Settings {
   studioProvisionSecretKey: string | undefined; // Secret key to call the Deco AI Gateway API to provision keys
   /** Lowercased emails allowed onto the /admin instance dashboard (DEPLOYMENT_ADMIN_EMAILS, CSV). */
   deploymentAdminEmails: string[];
+  /** With `deploymentAdminEmails` empty, the deployment's first account is its
+   *  admin (DEPLOYMENT_ADMIN_FIRST_USER, default on; `false` turns it off).
+   *  Never applies with plans enabled — see `src/auth/deployment-admin.ts`. */
+  deploymentAdminFirstUser: boolean;
   /** Org ids whose members may read and act across every org's task board
    *  (STUDIO_ADMIN_ORG_IDS, CSV). Access control, not product gating.
    *

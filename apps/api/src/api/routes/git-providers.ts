@@ -27,6 +27,7 @@ import { Hono } from "hono";
 import { getConnInfo } from "hono/bun";
 import { z } from "zod";
 import { ContextFactory } from "@/core/context-factory";
+import { deploymentAdminVerdict } from "@/auth/deployment-admin";
 import { ForbiddenError } from "@/core/access-control";
 import type { StudioContext } from "@/core/studio-context";
 import { getPublicUrl } from "@/core/server-constants";
@@ -654,13 +655,10 @@ gitProviderCallbackRoutes.get("/github/manifest-callback", async (c) => {
   if (!stateUserId) return done("invalid_state");
   const ctx = await ContextFactory.create(c.req.raw);
   const user = ctx.auth.user;
-  const email = user?.email?.toLowerCase();
   if (
     !user ||
     user.id !== stateUserId ||
-    !user.emailVerified ||
-    !email ||
-    !settings.deploymentAdminEmails.includes(email)
+    (await deploymentAdminVerdict(user)) !== "admin"
   ) {
     return done("session_mismatch");
   }
