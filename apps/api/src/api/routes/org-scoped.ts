@@ -30,6 +30,7 @@ import { createProxyRoutes } from "./proxy";
 import { createSelfRoutes } from "./self";
 import { createTaskRunMcpRoutes } from "./task-run-mcp";
 import { createHomeNextActionsRoutes } from "./home-next-actions";
+import { createInstructionsImproveRoutes } from "./instructions-improve";
 import { createReportsShareRoutes } from "./reports-share";
 import { createInternalRepositoryRoutes } from "./internal-repositories";
 import { createOrganizationNoticeServiceRoutes } from "./organization-notices-service";
@@ -115,6 +116,7 @@ export const createOrgScopedApi = (deps: OrgScopedDeps) => {
   app.route("/sandbox", createSandboxRoutes()); // /api/:org/sandbox/:virtualMcpId/:branch/*
   app.route("/decofile", createDecofileRoutes()); // /api/:org/decofile/:virtualMcpId/:branch[/*] — sandbox-less Fast Preview CMS
   app.route("/", createHomeNextActionsRoutes());
+  app.route("/", createInstructionsImproveRoutes()); // /api/:org/instructions/improve — one-call rewrite for the Improve buttons
   app.route("/", createOrgNoticeRoutes()); // /api/:org/notice — the org's pinned billing notice
   app.route("/deco-sites", createDecoSitesOrgRoutes()); // /api/:org/deco-sites
   app.route("/hosting", createHostingRoutes()); // /api/:org/hosting/:site/...

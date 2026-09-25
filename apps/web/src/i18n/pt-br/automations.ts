@@ -96,6 +96,10 @@ export const automations = {
   "automations.automationDetail.failedToAddStarter":
     "Falha ao adicionar acionador",
   "automations.automationDetail.improve": "Melhorar",
+  "automations.automationDetail.improved": "Instruções melhoradas",
+  "automations.automationDetail.undoImprove": "Desfazer",
+  "automations.automationDetail.improveFailed":
+    "Não foi possível melhorar as instruções",
   "automations.automationDetail.inactive": "Inativo",
   "automations.automationDetail.instructions": "Instruções",
   "automations.automationDetail.instructionsPlaceholder":

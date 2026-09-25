@@ -177,6 +177,10 @@ export const virtualMcp = {
   "virtualMcp.virtualMcp.failedToCreateInstance": "Falha ao criar instância",
   "virtualMcp.virtualMcp.fullscreen": "Tela cheia",
   "virtualMcp.virtualMcp.improve": "Melhorar",
+  "virtualMcp.virtualMcp.improved": "Instruções melhoradas",
+  "virtualMcp.virtualMcp.undoImprove": "Desfazer",
+  "virtualMcp.virtualMcp.improveFailed":
+    "Não foi possível melhorar as instruções",
   "virtualMcp.virtualMcp.instanceAlreadyAdded":
     "Esta instância já foi adicionada ao projeto",
   "virtualMcp.virtualMcp.instructions": "Instruções",
