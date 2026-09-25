@@ -44,3 +44,58 @@ describe("createProviderFromSecret", () => {
     });
   }
 });
+
+describe("openai-compatible chat streaming", () => {
+  /** LiteLLM-style SSE: reasoning in `reasoning_content`, then the answer. */
+  function sse(events: unknown[]): Response {
+    const body =
+      events.map((e) => `data: ${JSON.stringify(e)}\n\n`).join("") +
+      "data: [DONE]\n\n";
+    return new Response(body, {
+      headers: { "Content-Type": "text/event-stream" },
+    });
+  }
+  const delta = (d: Record<string, unknown>, finish: string | null = null) => ({
+    id: "c1",
+    object: "chat.completion.chunk",
+    created: 1,
+    model: "m",
+    choices: [{ index: 0, delta: d, finish_reason: finish }],
+  });
+
+  it("streams reasoning_content as reasoning, not silence", async () => {
+    const realFetch = globalThis.fetch;
+    const requests: string[] = [];
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      requests.push(String(input));
+      return sse([
+        delta({ role: "assistant", reasoning_content: "Let me " }),
+        delta({ reasoning_content: "think." }),
+        delta({ content: "Hi" }),
+        delta({}, "stop"),
+      ]);
+    }) as typeof fetch;
+    try {
+      const { streamText } = await import("ai");
+      const provider = createProviderFromSecret({
+        ...secret("openai-compatible"),
+        baseUrl: "http://litellm.test",
+      } as DecopilotSecretModelSource);
+      const result = streamText({
+        model: provider.aiSdk.languageModel("m"),
+        prompt: "hi",
+      });
+      const kinds: string[] = [];
+      for await (const part of result.fullStream) kinds.push(part.type);
+      expect(await result.reasoningText).toBe("Let me think.");
+      expect(await result.text).toBe("Hi");
+      // Reasoning arrived as its own parts, before the text.
+      expect(kinds.indexOf("reasoning-delta")).toBeLessThan(
+        kinds.indexOf("text-delta"),
+      );
+      expect(requests[0]).toBe("http://litellm.test/v1/chat/completions");
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  });
+});

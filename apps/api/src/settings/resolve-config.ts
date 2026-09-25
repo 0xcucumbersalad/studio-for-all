@@ -362,6 +362,17 @@ export function resolveConfig(
       envVars.DECOPILOT_MAX_CONCURRENT_HOSTED_RUNS,
       3,
     ),
+    decopilotQueuePollMs: toPositiveIntegerOrDefault(
+      "DECOPILOT_QUEUE_POLL_MS",
+      envVars.DECOPILOT_QUEUE_POLL_MS,
+      100,
+      60_000,
+    ),
+    decopilotStreamCoalesceMs: toNonNegativeIntegerOrDefault(
+      "DECOPILOT_STREAM_COALESCE_MS",
+      envVars.DECOPILOT_STREAM_COALESCE_MS,
+      30,
+    ),
     taskBoardReviewSweeperEnabled: toBoolWithDefault(
       envVars.TASK_BOARD_REVIEW_SWEEPER_ENABLED,
       true,
