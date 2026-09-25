@@ -98,4 +98,52 @@ describe("openai-compatible chat streaming", () => {
       globalThis.fetch = realFetch;
     }
   });
+
+  // Gateway streams a little, then holds the connection open.
+  it("fails a stream that stalls mid-answer instead of hanging", async () => {
+    const realFetch = globalThis.fetch;
+    const realTimeout = process.env.OPENAI_COMPATIBLE_STALL_TIMEOUT_MS;
+    process.env.OPENAI_COMPATIBLE_STALL_TIMEOUT_MS = "50";
+    const first = `data: ${JSON.stringify(delta({ role: "assistant", content: "Hi" }))}\n\n`;
+    globalThis.fetch = (async () =>
+      new Response(
+        new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode(first));
+          },
+        }),
+        { headers: { "Content-Type": "text/event-stream" } },
+      )) as unknown as typeof fetch;
+    try {
+      const { streamText } = await import("ai");
+      const provider = createProviderFromSecret({
+        ...secret("openai-compatible"),
+        baseUrl: "http://litellm.test",
+      } as DecopilotSecretModelSource);
+      const errors: unknown[] = [];
+      const result = streamText({
+        model: provider.aiSdk.languageModel("m"),
+        prompt: "hi",
+        onError: ({ error }) => {
+          errors.push(error);
+        },
+      });
+      try {
+        for await (const _part of result.fullStream) {
+          // drain
+        }
+      } catch (thrown) {
+        errors.push(thrown);
+      }
+      const error = errors[0] as Error;
+      expect((error.cause as Error).message).toContain("LLM provider stalled");
+    } finally {
+      globalThis.fetch = realFetch;
+      if (realTimeout === undefined) {
+        delete process.env.OPENAI_COMPATIBLE_STALL_TIMEOUT_MS;
+      } else {
+        process.env.OPENAI_COMPATIBLE_STALL_TIMEOUT_MS = realTimeout;
+      }
+    }
+  });
 });
