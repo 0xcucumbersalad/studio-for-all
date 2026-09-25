@@ -24,6 +24,7 @@ import { Hono } from "hono";
 import type { Context } from "hono";
 import { auth, getTrustedOrigins, grantDeploymentAdmin } from "@/auth";
 import { isAlreadyMemberError } from "@/auth/is-already-member-error";
+import { deploymentAdminVerdict } from "@/auth/deployment-admin";
 import { BUILTIN_ROLES, type BuiltinRole } from "@decocms/shared/auth/roles";
 import { getDb } from "@/database";
 import { OrganizationSettingsStorage } from "@/storage/organization-settings";
@@ -215,11 +216,11 @@ async function requireDeploymentAdmin(
   if (!user) {
     return c.json({ error: "Unauthorized" }, 401);
   }
-  const email = user.email?.toLowerCase();
-  if (!email || !getSettings().deploymentAdminEmails.includes(email)) {
+  const verdict = await deploymentAdminVerdict(user);
+  if (verdict === "denied") {
     return c.json({ error: "Forbidden" }, 403);
   }
-  if (!user.emailVerified) {
+  if (verdict === "unverified") {
     // Allowlisted but unverified: distinct code so the operator knows to
     // verify their email, not that they're missing from the allowlist.
     // Checked AFTER the allowlist so a random (typically unverified) signup

@@ -119,7 +119,8 @@ const scopes = Object.values(getToolsByCategory())
   .flat();
 
 /**
- * Deployment admin user IDs, resolved lazily from `deploymentAdminEmails` by
+ * Deployment admin user IDs, resolved lazily (`deploymentAdminVerdict`: the
+ * `deploymentAdminEmails` allowlist, or the first account when it is empty) by
  * the `/api/_admin/*` middleware (apps/api/src/api/routes/admin.ts) on each
  * verified admin's first request. Better Auth's admin plugin shallow-spreads
  * the options object it's given at plugin-init time, so `adminUserIds` below
@@ -134,7 +135,7 @@ const scopes = Object.values(getToolsByCategory())
  * raw `/api/auth/admin/*` HTTP surface (set-role, set-user-password, ...) is
  * fenced off in app.ts — everything the dashboard needs goes through the
  * curated `/api/_admin/*` routes, which call `auth.api.*` in-process and
- * re-check the email allowlist on every request. Without that fence a pushed id
+ * re-check the verdict on every request. Without that fence a pushed id
  * could mint a persistent, restart-surviving admin via set-role.
  */
 const deploymentAdminUserIds: string[] = [];
