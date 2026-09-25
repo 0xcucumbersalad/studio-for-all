@@ -2420,6 +2420,9 @@ export async function createApp(options: CreateAppOptions = {}) {
       priorityEnabled: true,
     });
     await DBOS.registerQueue(HOSTED_HARNESS_SANDBOXED_QUEUE, {
+      // Sandbox-hosted runs (claude-code board tasks) cross the thread-gate
+      // too, so this is their second hop — same interval as the chat path.
+      minPollingIntervalMs: getSettings().decopilotQueuePollMs,
       workerConcurrency: getSettings().sandboxMaxConcurrentHostedRuns,
       priorityEnabled: true,
     });

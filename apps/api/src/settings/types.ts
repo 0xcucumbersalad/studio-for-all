@@ -192,11 +192,12 @@ export interface Settings {
    *  HOSTED_HARNESS_QUEUE, so DBOS enforces it BEFORE the dequeue and excess
    *  work stays ENQUEUED for another pod — see `queue-names.ts`. */
   decopilotMaxConcurrentHostedRuns: number;
-  /** How often the thread-gate and hosted-harness queues look for new runs
-   *  (DECOPILOT_QUEUE_POLL_MS, default 100). Every chat turn waits on BOTH
-   *  queues, so DBOS's own 1s default added ~1s (up to ~2s) before the model
-   *  was called. Each tick is a couple of small Postgres queries per queue per
-   *  pod; set 1000 to restore the library default. */
+  /** How often the run queues — thread-gate, hosted-harness and its sandboxed
+   *  twin — look for new runs (DECOPILOT_QUEUE_POLL_MS, default 100). Every run
+   *  waits on the thread-gate AND one hosted-harness queue, so DBOS's own 1s
+   *  default added ~1s (up to ~2s) before the model was called. Each tick is a
+   *  couple of small Postgres queries per queue per pod; set 1000 to restore
+   *  the library default. */
   decopilotQueuePollMs: number;
   /** Window in ms for merging consecutive text/reasoning deltas before each
    *  JetStream publish (DECOPILOT_STREAM_COALESCE_MS, default 30; 0 = one
