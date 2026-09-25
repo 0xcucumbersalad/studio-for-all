@@ -89,6 +89,8 @@ import type {
   HarnessStreamTitleOptions,
 } from "./consume-harness-stream";
 import { ingestRun } from "./ingest-run";
+import { getSettings } from "@/settings";
+import { coalesceDeltas } from "./coalesce-deltas";
 import { withLivenessHeartbeat } from "./with-liveness-heartbeat";
 import {
   checkModelPermission,
@@ -1531,7 +1533,17 @@ async function prepareRun(
         // chunk injected during a silent model/tool wait gets a real seq
         // through the exact same publish path as every other chunk (see
         // with-liveness-heartbeat.ts's module doc for the full contract).
-        chunks: withLivenessHeartbeat(dispatchHarnessChunks()),
+        // Decopilot streams token-level deltas, each of which would otherwise
+        // be its own awaited publish — see coalesce-deltas.ts. A sandbox-hosted
+        // harness already reports whole steps and keeps one chunk per event.
+        chunks: withLivenessHeartbeat(
+          sandboxHosted
+            ? dispatchHarnessChunks()
+            : coalesceDeltas(
+                dispatchHarnessChunks(),
+                getSettings().decopilotStreamCoalesceMs,
+              ),
+        ),
         // Resume bookkeeping, sandbox-hosted runs only (see `resumeFromSeq`).
         // `startSeq` makes this attempt EXTEND the dead attempt's log; the
         // awaited `onPublished` write is what lets the next one do the same.

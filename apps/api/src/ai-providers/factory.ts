@@ -72,6 +72,41 @@ function buildIndex(models: ModelInfo[]): Map<string, Partial<ModelInfo>> {
   return map;
 }
 
+/**
+ * How long a failed upstream model listing is remembered. A provider whose
+ * `/models` is slow or refused (a LiteLLM virtual key without access to it, an
+ * install that blocks openrouter.ai) used to be re-fetched on EVERY chat turn,
+ * each one waiting out the caller's timeout before the model was even called.
+ */
+const LIST_FAILURE_TTL_MS = 60_000;
+const MAX_REMEMBERED_FAILURES = 1_000;
+
+let orIndexFailedAt = 0;
+let orIndexInflight: Promise<Map<string, Partial<ModelInfo>>> | null = null;
+
+/** Keys whose last listing failed, with when — see LIST_FAILURE_TTL_MS. */
+const listFailures = new Map<string, { at: number; error: unknown }>();
+/** One upstream listing per key at a time, shared by concurrent callers. */
+const listInflight = new Map<string, Promise<ModelInfo[]>>();
+
+function rememberListFailure(key: string, error: unknown, now: number): void {
+  if (listFailures.size >= MAX_REMEMBERED_FAILURES) {
+    for (const [k, v] of listFailures) {
+      if (now - v.at >= LIST_FAILURE_TTL_MS) listFailures.delete(k);
+    }
+    if (listFailures.size >= MAX_REMEMBERED_FAILURES) listFailures.clear();
+  }
+  listFailures.set(key, { at: now, error });
+}
+
+/** Test seam: forget remembered failures and in-flight listings. */
+export function resetModelListStateForTest(): void {
+  listFailures.clear();
+  listInflight.clear();
+  orIndexFailedAt = 0;
+  orIndexInflight = null;
+}
+
 async function getOpenRouterIndex(
   cache?: ModelListCache,
 ): Promise<Map<string, Partial<ModelInfo>>> {
@@ -79,6 +114,18 @@ async function getOpenRouterIndex(
     const cached = await cache.get(OR_INDEX_ORG_ID, "openrouter");
     if (cached) return buildIndex(cached);
   }
+  // Enrichment is optional: after a failure, skip it for a while rather than
+  // make every uncached listing wait on openrouter.ai again.
+  if (Date.now() - orIndexFailedAt < LIST_FAILURE_TTL_MS) return new Map();
+  orIndexInflight ??= fetchOpenRouterIndex(cache).finally(() => {
+    orIndexInflight = null;
+  });
+  return orIndexInflight;
+}
+
+async function fetchOpenRouterIndex(
+  cache?: ModelListCache,
+): Promise<Map<string, Partial<ModelInfo>>> {
   try {
     const res = await fetchWithTransientRetry(
       "OpenRouter enrichment index",
@@ -91,6 +138,7 @@ async function getOpenRouterIndex(
     if (cache) await cache.set(OR_INDEX_ORG_ID, "openrouter", models);
     return buildIndex(models);
   } catch {
+    orIndexFailedAt = Date.now();
     return new Map();
   }
 }
@@ -210,8 +258,11 @@ export class AIProviderFactory {
     const adapter = getProviders()[providerId];
     if (!adapter) throw new Error(`Unknown provider: ${providerId}`);
 
+    // Per KEY, not per provider: two openai-compatible keys (two LiteLLM
+    // instances, say) have different catalogs and used to overwrite each other.
+    const cacheId = `${providerId}:${keyId}`;
     if (this.cache) {
-      const cached = await this.cache.get(organizationId, providerId);
+      const cached = await this.cache.get(organizationId, cacheId);
       if (cached) {
         // Re-apply per-request flags (e.g. asyncResearch) on the cached
         // payload — entries cached before the flag existed otherwise leak
@@ -220,6 +271,37 @@ export class AIProviderFactory {
       }
     }
 
+    const flightKey = `${organizationId}\0${keyId}`;
+    const failed = listFailures.get(flightKey);
+    if (failed && Date.now() - failed.at < LIST_FAILURE_TTL_MS) {
+      throw failed.error;
+    }
+    let inflight = listInflight.get(flightKey);
+    if (!inflight) {
+      inflight = this.fetchModels(adapter, apiKey, providerId)
+        .then(async (result) => {
+          listFailures.delete(flightKey);
+          if (this.cache) {
+            await this.cache.set(organizationId, cacheId, result);
+          }
+          return result;
+        })
+        .catch((error: unknown) => {
+          rememberListFailure(flightKey, error, Date.now());
+          throw error;
+        })
+        .finally(() => listInflight.delete(flightKey));
+      listInflight.set(flightKey, inflight);
+    }
+    return applyProviderFlags(await inflight, adapter, apiKey);
+  }
+
+  /** The upstream listing, deduped and enriched. Uncached. */
+  private async fetchModels(
+    adapter: ProviderAdapter,
+    apiKey: string,
+    providerId: ModelInfo["providerId"],
+  ): Promise<ModelInfo[]> {
     const provider = adapter.create(apiKey);
     const rawModels = await provider.listModels();
 
@@ -243,13 +325,7 @@ export class AIProviderFactory {
       }));
     }
 
-    const result = models.map((m) => ({ ...m, providerId }));
-
-    if (this.cache) {
-      await this.cache.set(organizationId, providerId, result);
-    }
-
-    return applyProviderFlags(result, adapter, apiKey);
+    return models.map((m) => ({ ...m, providerId }));
   }
 }
 

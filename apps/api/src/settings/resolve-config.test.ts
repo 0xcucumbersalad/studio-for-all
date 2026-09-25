@@ -258,6 +258,29 @@ describe("resolveConfig admin prompt repo", () => {
   });
 });
 
+describe("resolveConfig chat latency settings", () => {
+  it("defaults to the fast path", () => {
+    const { settings } = resolveConfig(flags, {});
+    expect(settings.decopilotQueuePollMs).toBe(100);
+    expect(settings.decopilotStreamCoalesceMs).toBe(30);
+  });
+
+  it("each can be turned back", () => {
+    const { settings } = resolveConfig(flags, {
+      DECOPILOT_QUEUE_POLL_MS: "1000",
+      DECOPILOT_STREAM_COALESCE_MS: "0",
+    });
+    expect(settings.decopilotQueuePollMs).toBe(1000);
+    expect(settings.decopilotStreamCoalesceMs).toBe(0);
+  });
+
+  it("rejects a non-positive poll interval", () => {
+    expect(() =>
+      resolveConfig(flags, { DECOPILOT_QUEUE_POLL_MS: "0" }),
+    ).toThrow(/DECOPILOT_QUEUE_POLL_MS/);
+  });
+});
+
 describe("resolveConfig task board admin orgs", () => {
   it("defaults to an empty list — deployed is not enabled", () => {
     const result = resolveConfig(flags, {});

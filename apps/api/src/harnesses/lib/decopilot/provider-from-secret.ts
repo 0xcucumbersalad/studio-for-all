@@ -6,6 +6,7 @@
 
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogle } from "@ai-sdk/google";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { createOpenAI } from "@ai-sdk/openai";
 import type { ProviderV4 } from "@ai-sdk/provider";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
@@ -42,6 +43,17 @@ function withProviderSurface(
       );
     },
   };
+}
+
+/**
+ * OPENAI_COMPATIBLE_STREAMS_REASONING (default on). Read from the environment
+ * here rather than through `@/settings`: this module is portable harness code
+ * and must stay free of app-local imports. `false` returns openai-compatible
+ * chat to the `@ai-sdk/openai` client.
+ */
+function openaiCompatibleStreamsReasoning(): boolean {
+  const value = process.env.OPENAI_COMPATIBLE_STREAMS_REASONING?.trim();
+  return !value || value === "true" || value === "1";
 }
 
 export function createProviderFromSecret(
@@ -132,11 +144,24 @@ export function createProviderFromSecret(
         ...(normalizedBaseUrl ? { baseURL: normalizedBaseUrl } : {}),
         ...(extraHeaders ? { headers: extraHeaders } : {}),
       });
+      // Chat goes through `@ai-sdk/openai-compatible`: `@ai-sdk/openai`'s chat
+      // model never reads `reasoning_content`, so a thinking model behind
+      // LiteLLM / vLLM / Ollama streamed nothing while it thought and then
+      // dumped its answer. The OpenAI provider stays for the other surfaces.
+      const chatModel = openaiCompatibleStreamsReasoning()
+        ? createOpenAICompatible({
+            name: providerId,
+            baseURL: normalizedBaseUrl || "https://api.openai.com/v1",
+            apiKey: apiKey || "not-needed",
+            ...(extraHeaders ? { headers: extraHeaders } : {}),
+            // Token usage on the final chunk — what the OpenAI client sent too.
+            includeUsage: true,
+          }).chatModel
+        : openai.chat;
       return withProviderSurface(
         source,
         Object.assign(openai, {
-          languageModel: (...args: Parameters<typeof openai.chat>) =>
-            openai.chat(...args),
+          languageModel: (modelId: string) => chatModel(modelId),
         }) as ProviderV4,
       );
     }

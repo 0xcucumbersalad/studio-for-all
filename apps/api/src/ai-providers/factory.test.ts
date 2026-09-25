@@ -1,10 +1,12 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import type { AIProviderKeyStorage } from "../storage/ai-provider-keys";
-import { AIProviderFactory } from "./factory";
+import { AIProviderFactory, resetModelListStateForTest } from "./factory";
+import { InMemoryModelListCache } from "./model-list-cache";
 
 const realFetch = globalThis.fetch;
 afterEach(() => {
   globalThis.fetch = realFetch;
+  resetModelListStateForTest();
 });
 
 const GOOGLE_MODELS_BODY = {
@@ -170,5 +172,84 @@ describe("AIProviderFactory.listModels", () => {
 
     expect(models[0]?.costs?.input).toBe(0);
     expect(models[0]?.costs?.output).toBe(0);
+  });
+});
+
+describe("AIProviderFactory.listModels caching", () => {
+  /** Two openai-compatible keys pointing at two different servers. */
+  function compatStorage(): AIProviderKeyStorage {
+    return {
+      resolve: async (keyId: string) => ({
+        keyInfo: { id: keyId, providerId: "openai-compatible" } as never,
+        apiKey: JSON.stringify({
+          baseUrl: `http://${keyId}.test`,
+          apiKey: "k",
+        }),
+      }),
+    } as unknown as AIProviderKeyStorage;
+  }
+
+  /** Records upstream calls; `/models` answers with one model named after the host. */
+  function fakeUpstream(opts: { failModels?: boolean } = {}) {
+    const calls: string[] = [];
+    globalThis.fetch = (async (url: unknown): Promise<Response> => {
+      const u = new URL(String(url));
+      calls.push(u.host + u.pathname);
+      if (u.hostname === "openrouter.ai") {
+        return new Response("down", { status: 503 });
+      }
+      if (opts.failModels) return new Response("nope", { status: 401 });
+      return new Response(
+        JSON.stringify({ data: [{ id: `model-of-${u.hostname}` }] }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    }) as typeof fetch;
+    return calls;
+  }
+
+  test("caches per key, so two openai-compatible keys keep their own lists", async () => {
+    fakeUpstream();
+    const factory = new AIProviderFactory(
+      compatStorage(),
+      new InMemoryModelListCache(),
+    );
+    const a = await factory.listModels("a", "org");
+    const b = await factory.listModels("b", "org");
+    expect(a.map((m) => m.modelId)).toEqual(["model-of-a.test"]);
+    expect(b.map((m) => m.modelId)).toEqual(["model-of-b.test"]);
+  });
+
+  test("concurrent listings of one key share a single upstream call", async () => {
+    const calls = fakeUpstream();
+    const factory = new AIProviderFactory(compatStorage());
+    await Promise.all([
+      factory.listModels("a", "org"),
+      factory.listModels("a", "org"),
+      factory.listModels("a", "org"),
+    ]);
+    expect(calls.filter((c) => c === "a.test/v1/models")).toHaveLength(1);
+  });
+
+  test("a failed listing is remembered instead of re-fetched every turn", async () => {
+    const calls = fakeUpstream({ failModels: true });
+    const factory = new AIProviderFactory(compatStorage());
+    await expect(factory.listModels("a", "org")).rejects.toThrow();
+    const after = calls.length;
+    await expect(factory.listModels("a", "org")).rejects.toThrow();
+    expect(calls.length).toBe(after);
+  });
+
+  test("a failed OpenRouter enrichment is not retried on the next listing", async () => {
+    const calls = fakeUpstream();
+    const orCalls = () =>
+      calls.filter((c) => c.startsWith("openrouter.ai")).length;
+    const factory = new AIProviderFactory(compatStorage());
+    await factory.listModels("a", "org");
+    const afterFirst = orCalls();
+    expect(afterFirst).toBeGreaterThan(0);
+    // Another key's listing still works, without asking openrouter.ai again.
+    const b = await factory.listModels("b", "org");
+    expect(b.map((m) => m.modelId)).toEqual(["model-of-b.test"]);
+    expect(orCalls()).toBe(afterFirst);
   });
 });

@@ -2401,6 +2401,9 @@ export async function createApp(options: CreateAppOptions = {}) {
     // different threads progress in parallel. Used by user-message POSTs
     // (Phase 3) and automation fires (Phase 5).
     await DBOS.registerQueue(THREAD_GATE_QUEUE, {
+      // Every chat turn waits on this queue AND the hosted-harness one below;
+      // at DBOS's 1s default that was up to ~2s before the model was called.
+      minPollingIntervalMs: getSettings().decopilotQueuePollMs,
       partitionQueue: true,
       concurrency: THREAD_GATE_PARTITION_CONCURRENCY,
       // Let an enqueue state its class (`enqueueOptions.priority`, lower first
@@ -2412,6 +2415,7 @@ export async function createApp(options: CreateAppOptions = {}) {
     });
     // Unpartitioned + per-pod cap at dequeue — see the queue-name doc comments.
     await DBOS.registerQueue(HOSTED_HARNESS_QUEUE, {
+      minPollingIntervalMs: getSettings().decopilotQueuePollMs,
       workerConcurrency: getSettings().decopilotMaxConcurrentHostedRuns,
       priorityEnabled: true,
     });
