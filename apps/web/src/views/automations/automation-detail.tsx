@@ -13,7 +13,7 @@ import {
 } from "@/components/automations/automation-config";
 import { User } from "@/components/user/user.tsx";
 import { useAutomation, useAutomationActions } from "@/hooks/use-automations";
-import { useChatTask, useChatStream } from "@/components/chat/context";
+import { useChatTask } from "@/components/chat/context";
 import { Button } from "@decocms/ui/components/button.tsx";
 import {
   Collapsible,
@@ -27,9 +27,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@decocms/ui/components/tooltip.tsx";
-import { StudioPackAgentId, useConnections, useProjectContext } from "@/sdk";
+import { useConnections, useProjectContext } from "@/sdk";
 import { usePanelActions } from "@/layouts/shell-layout";
-import { buildImprovePromptDoc } from "@/components/chat/tiptap/build-improve-prompt-doc";
+import { plainTextToTiptapDoc } from "@/components/chat/tiptap/plain-text-doc";
+import { streamImprovedInstructions } from "@/lib/improve-instructions";
 import {
   ArrowLeft,
   ArrowUp,
@@ -144,7 +145,6 @@ export function SettingsTab({
   // Chat hooks for running the automation
   const { openTask } = useChatTask();
   const { openSidePanel } = usePanelActions();
-  const { sendMessage } = useChatStream();
   const initialTiptapDoc =
     (automation.messages?.[0] as { metadata?: Metadata } | undefined)?.metadata
       ?.tiptapDoc ?? undefined;
@@ -178,6 +178,7 @@ export function SettingsTab({
       .join("\n");
     if (!instructionsText.trim()) return;
 
+    const previous = tiptapDoc;
     setIsImproving(true);
     try {
       forceSessionFlush();
@@ -186,18 +187,28 @@ export function SettingsTab({
         agent_id: agentId,
         instructions_length: instructionsText.length,
       });
-
-      openSidePanel();
-
-      await sendMessage({
-        tiptapDoc: buildImprovePromptDoc({
-          managerAgentId: StudioPackAgentId.AUTOMATION_MANAGER(org.id),
-          managerName: "Automation Manager",
-          kind: "automation",
-          id: automationId,
-          instructions: instructionsText,
-        }),
+      const improved = await streamImprovedInstructions({
+        orgSlug: org.slug,
+        kind: "automation",
+        name: automation.name,
+        instructions: instructionsText,
+        onText: (text) => setTiptapDocRaw(plainTextToTiptapDoc(text)),
       });
+      // Through the saving setter only once, with the finished text.
+      setTiptapDoc(plainTextToTiptapDoc(improved));
+      toast.success(t("automations.automationDetail.improved"), {
+        action: {
+          label: t("automations.automationDetail.undoImprove"),
+          onClick: () => setTiptapDoc(previous),
+        },
+      });
+    } catch (error) {
+      setTiptapDocRaw(previous);
+      toast.error(
+        error instanceof Error && error.message
+          ? error.message
+          : t("automations.automationDetail.improveFailed"),
+      );
     } finally {
       setIsImproving(false);
     }

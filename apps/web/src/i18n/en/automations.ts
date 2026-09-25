@@ -89,6 +89,10 @@ export const automations = {
   "automations.automationDetail.backToList": "Back to list",
   "automations.automationDetail.failedToAddStarter": "Failed to add starter",
   "automations.automationDetail.improve": "Improve",
+  "automations.automationDetail.improved": "Instructions improved",
+  "automations.automationDetail.undoImprove": "Undo",
+  "automations.automationDetail.improveFailed":
+    "Could not improve the instructions",
   "automations.automationDetail.inactive": "Inactive",
   "automations.automationDetail.instructions": "Instructions",
   "automations.automationDetail.instructionsPlaceholder":

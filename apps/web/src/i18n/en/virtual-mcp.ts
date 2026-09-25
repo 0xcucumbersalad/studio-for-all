@@ -173,6 +173,9 @@ export const virtualMcp = {
   "virtualMcp.virtualMcp.failedToCreateInstance": "Failed to create instance",
   "virtualMcp.virtualMcp.fullscreen": "Fullscreen",
   "virtualMcp.virtualMcp.improve": "Improve",
+  "virtualMcp.virtualMcp.improved": "Instructions improved",
+  "virtualMcp.virtualMcp.undoImprove": "Undo",
+  "virtualMcp.virtualMcp.improveFailed": "Could not improve the instructions",
   "virtualMcp.virtualMcp.instanceAlreadyAdded":
     "This instance is already added to the project",
   "virtualMcp.virtualMcp.instructions": "Instructions",

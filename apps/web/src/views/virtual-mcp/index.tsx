@@ -23,8 +23,7 @@ import type {
   VirtualMCPEntity,
   VirtualMcpSidebarView,
 } from "@decocms/shared/sdk/types";
-import { useChatStream } from "@/components/chat/context";
-import { buildImprovePromptDoc } from "@/components/chat/tiptap/build-improve-prompt-doc";
+import { streamImprovedInstructions } from "@/lib/improve-instructions";
 import { EmptyState } from "@/components/empty-state.tsx";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { usePanelActions } from "@/layouts/shell-layout";
@@ -60,7 +59,6 @@ import {
 } from "@decocms/ui/components/tooltip.tsx";
 import {
   ENV_VAR_KEY_RE,
-  getWellKnownDecopilotVirtualMCP,
   useConnectionActions,
   useProjectContext,
   useVirtualMCP,
@@ -427,8 +425,7 @@ function VirtualMcpDetailViewWithData({
 
   const [instructionsFullscreen, setInstructionsFullscreen] = useState(false);
   const [isImproving, setIsImproving] = useState(false);
-  const { createNewTask, openSidePanel } = usePanelActions();
-  const { sendMessage } = useChatStream();
+  const { createNewTask } = usePanelActions();
 
   const handleImprovePrompt = async () => {
     if (isImproving) return;
@@ -442,20 +439,32 @@ function VirtualMcpDetailViewWithData({
         agent_id: virtualMcp.id,
         instructions_length: currentInstructions.length,
       });
-
-      openSidePanel();
-
-      // This chat runs as the agent being edited; agent CRUD is Super-Agent-only.
-      const superAgent = getWellKnownDecopilotVirtualMCP(org.id);
-      await sendMessage({
-        tiptapDoc: buildImprovePromptDoc({
-          managerAgentId: superAgent.id,
-          managerName: superAgent.title,
-          kind: "agent",
-          id: virtualMcp.id,
-          instructions: currentInstructions,
-        }),
+      const improved = await streamImprovedInstructions({
+        orgSlug: org.slug,
+        kind: "agent",
+        name: form.getValues("title") || virtualMcp.title,
+        instructions: currentInstructions,
+        onText: (text) => form.setValue("metadata.instructions", text),
       });
+      form.setValue("metadata.instructions", improved, { shouldDirty: true });
+      toast.success(t("virtualMcp.virtualMcp.improved"), {
+        action: {
+          label: t("virtualMcp.virtualMcp.undoImprove"),
+          onClick: () =>
+            form.setValue("metadata.instructions", currentInstructions, {
+              shouldDirty: true,
+            }),
+        },
+      });
+    } catch (error) {
+      form.setValue("metadata.instructions", currentInstructions, {
+        shouldDirty: true,
+      });
+      toast.error(
+        error instanceof Error && error.message
+          ? error.message
+          : t("virtualMcp.virtualMcp.improveFailed"),
+      );
     } finally {
       setIsImproving(false);
     }
