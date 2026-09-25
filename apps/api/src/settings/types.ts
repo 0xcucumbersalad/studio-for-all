@@ -55,6 +55,10 @@ export interface Settings {
    *  sent as `x-deployment-admin-token`. Read-only routes and member-add only —
    *  no impersonation. Unset = header ignored entirely. */
   deploymentAdminToken: string | undefined;
+  /** The GitHub repository the admin prompt editor reads and opens PRs
+   *  against (STUDIO_PROMPT_REPO, `owner/name`; default `decocms/studio`). A
+   *  fork deployment points it at its own fork. */
+  adminPromptRepo: { owner: string; repo: string };
 
   // Observability
   // HTTP URL of the ClickHouse instance holding the OTel-native `otel_logs`
