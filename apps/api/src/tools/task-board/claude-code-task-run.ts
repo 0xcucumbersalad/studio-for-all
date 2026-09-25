@@ -257,7 +257,10 @@ export async function claudeCodeBlockingProvider(
     );
     return claudeCodeSupportsProvider(key.providerId) ? null : key.providerId;
   } catch (err) {
-    console.warn("[task-board] model provider lookup for claude-code failed", err);
+    console.warn(
+      "[task-board] model provider lookup for claude-code failed",
+      err,
+    );
     return null;
   }
 }
